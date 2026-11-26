@@ -2,15 +2,15 @@ import os
 import subprocess
 import pypdf
 
-HTML_TEMPLATE = """<!DOCTYPE html>
+HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Automated Facial Recognition Attendance System: A Deep Metric and Support Vector Machine Approach for Real-Time Academic Attendance Management</title>
+<title>Automated Face Recognition System</title>
 <style>
   @page {
     size: letter;
-    margin: 0.75in 0.75in 0.85in 0.75in;
+    margin: 0.78in 0.75in 0.85in 0.75in;
     @bottom-center {
       content: counter(page);
       font-family: 'Times New Roman', Times, serif;
@@ -24,8 +24,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   body {
     font-family: 'Times New Roman', Times, serif;
-    font-size: 9.8pt;
-    line-height: 11.8pt;
+    font-size: 10pt;
+    line-height: 12.6pt;
     color: #000000;
     margin: 0;
     padding: 0;
@@ -35,60 +35,68 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   .paper-header {
     text-align: center;
-    margin-bottom: 12pt;
+    margin-bottom: 13pt;
   }
 
   h1.paper-title {
-    font-size: 14pt;
+    font-size: 15pt;
     font-weight: bold;
-    line-height: 16.5pt;
-    margin: 0 0 8pt 0;
+    line-height: 18pt;
+    margin: 0 0 10pt 0;
     text-align: center;
   }
 
-  .author-block {
-    font-size: 10.5pt;
-    margin-bottom: 4pt;
-    font-weight: normal;
+  .authors-grid {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin: 0 auto 6pt auto;
+    width: 96%;
+    gap: 10pt;
+  }
+
+  .author-col {
+    flex: 1;
+    text-align: center;
+    font-size: 9.8pt;
+    line-height: 12pt;
   }
 
   .author-name {
     font-weight: bold;
   }
 
-  .institution {
+  .author-roll {
     font-size: 9.2pt;
-    color: #222;
-    margin-bottom: 4pt;
   }
 
-  .email {
+  .author-email {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 8.8pt;
+    font-size: 8.2pt;
   }
 
-  .cvpr-tag {
-    font-size: 8.8pt;
-    font-style: italic;
-    color: #444;
-    margin-top: 4pt;
-    margin-bottom: 10pt;
+  .institution {
+    font-size: 9.8pt;
+    color: #111;
+    margin-top: 5pt;
+    margin-bottom: 11pt;
+    text-align: center;
   }
 
   .abstract-box {
-    margin: 0 auto 12pt auto;
-    width: 93%;
-    font-size: 9pt;
-    line-height: 11.2pt;
+    margin: 0 auto 13pt auto;
+    width: 94%;
+    font-size: 9.3pt;
+    line-height: 11.8pt;
     text-align: justify;
-    border-top: 0.6pt solid #000;
-    border-bottom: 0.6pt solid #000;
-    padding: 7pt 0;
+    border-top: 0.7pt solid #000;
+    border-bottom: 0.7pt solid #000;
+    padding: 8pt 0;
   }
 
   .abstract-title {
     font-weight: bold;
-    font-size: 9.2pt;
+    font-size: 9.6pt;
     display: inline;
   }
 
@@ -99,24 +107,24 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   }
 
   h2.sec-heading {
-    font-size: 10pt;
+    font-size: 10.2pt;
     font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: 0.4pt;
-    margin: 9.5pt 0 3.5pt 0;
+    letter-spacing: 0.3pt;
+    margin: 11pt 0 4.5pt 0;
     break-after: avoid;
   }
 
   h3.subsec-heading {
-    font-size: 9.5pt;
+    font-size: 9.8pt;
     font-weight: bold;
     font-style: italic;
-    margin: 6.5pt 0 2.5pt 0;
+    margin: 8pt 0 3pt 0;
     break-after: avoid;
   }
 
   p {
-    margin: 0 0 5pt 0;
+    margin: 0 0 6pt 0;
     text-indent: 10pt;
   }
 
@@ -124,36 +132,35 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     text-indent: 0;
   }
 
-  .equation {
-    text-align: center;
-    margin: 5pt 0;
-    font-style: italic;
-    font-size: 9.2pt;
+  ul.clean-list, ol.clean-list {
+    margin: 3.5pt 0 6.5pt 0;
+    padding-left: 14pt;
   }
 
-  .eq-num {
-    float: right;
-    font-style: normal;
+  ul.clean-list li, ol.clean-list li {
+    margin-bottom: 3.5pt;
+    text-align: justify;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 6.5pt 0;
-    font-size: 7.9pt;
-    line-height: 10pt;
+    margin: 5.5pt 0 8.5pt 0;
+    font-size: 8.2pt;
+    line-height: 10.4pt;
+    break-inside: avoid;
   }
 
   th {
     border-top: 1pt solid #000;
     border-bottom: 0.6pt solid #000;
-    padding: 2.8pt 3pt;
+    padding: 3.2pt 4pt;
     text-align: left;
     font-weight: bold;
   }
 
   td {
-    padding: 2.2pt 3pt;
+    padding: 2.5pt 4pt;
     text-align: left;
     border-bottom: 0.4pt solid #e0e0e0;
   }
@@ -163,26 +170,28 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   }
 
   .table-caption {
-    font-size: 8.2pt;
+    font-size: 8.5pt;
     font-weight: normal;
-    margin-bottom: 2pt;
-    text-align: left;
+    margin-top: 6.5pt;
+    margin-bottom: 2.5pt;
+    text-align: justify;
+    break-after: avoid;
   }
 
   .figure-box {
-    margin: 6.5pt 0;
-    padding: 5.5pt;
-    background: #fdfdfd;
-    border: 0.5pt solid #bbb;
+    margin: 8pt 0;
+    padding: 6.5pt;
+    background: #ffffff;
+    border: 0.6pt solid #bbb;
     border-radius: 2pt;
-    font-size: 7.9pt;
-    line-height: 9.8pt;
+    font-size: 8.2pt;
+    line-height: 10.2pt;
     break-inside: avoid;
   }
 
   .figure-caption {
-    font-size: 8.2pt;
-    margin-top: 3.5pt;
+    font-size: 8.4pt;
+    margin-top: 4.5pt;
     text-align: justify;
   }
 
@@ -192,56 +201,65 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   pre.code-box {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 7.2pt;
-    line-height: 8.8pt;
+    font-size: 7.4pt;
+    line-height: 9.5pt;
     background: #f8f8f8;
-    padding: 4.5pt;
-    margin: 3.5pt 0;
-    border: 0.4pt solid #ccc;
-    overflow: hidden;
+    padding: 5.5pt;
+    margin: 4.5pt 0 7pt 0;
+    border: 0.5pt solid #ccc;
+    white-space: pre-wrap;
+    word-break: break-all;
+    break-inside: avoid;
+  }
+
+  code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 8.4pt;
   }
 
   .reference-list {
-    font-size: 7.8pt;
-    line-height: 9.6pt;
-    padding-left: 12pt;
+    font-size: 8.1pt;
+    line-height: 10.2pt;
+    padding-left: 14pt;
     margin: 4.5pt 0;
   }
 
   .reference-list li {
-    margin-bottom: 3.5pt;
+    margin-bottom: 3.8pt;
     text-align: justify;
-  }
-
-  .page-num {
-    text-align: center;
-    font-size: 9pt;
-    margin-top: 10pt;
-  }
-
-  .break-page {
-    break-before: page;
   }
 </style>
 </head>
 <body>
 
 <div class="paper-header">
-  <h1 class="paper-title">Automated Facial Recognition Attendance System:<br>A Deep Metric and Support Vector Machine Approach for Real-Time Academic Attendance Management</h1>
-  
-  <div class="author-block">
-    <span class="author-name">Teerth</span>
+  <h1 class="paper-title">Automated Face Recognition System</h1>
+
+  <div class="authors-grid">
+    <div class="author-col">
+      <div class="author-name">Basab Bose</div>
+      <div class="author-roll">M26CSE002</div>
+      <div class="author-email">m26cse002@iitj.ac.in</div>
+    </div>
+    <div class="author-col">
+      <div class="author-name">Teerth Bhardwaj</div>
+      <div class="author-roll">M26CSE010</div>
+      <div class="author-email">m26cse010@iitj.ac.in</div>
+    </div>
+    <div class="author-col">
+      <div class="author-name">Ravikaran Singh</div>
+      <div class="author-roll">M26CSE012</div>
+      <div class="author-email">m26cse012@iitj.ac.in</div>
+    </div>
   </div>
+
   <div class="institution">
-    Department of Computer Science and Engineering<br>
-    Indian Institute of Technology Jodhpur, Rajasthan 342030, India
+    Department of Computer Science and Engineering, Indian Institute of Technology Jodhpur, India
   </div>
-  <div class="email">teerth@iitj.ac.in</div>
-  <div class="cvpr-tag">Technical Report &mdash; Computer Vision and Pattern Recognition (CVPR) Track</div>
 
   <div class="abstract-box">
     <span class="abstract-title">Abstract&mdash;</span>
-    Manual attendance collection in large university lecture environments introduces significant instructional overhead, administrative latency, and acute vulnerability to proxy fabrication. While biometric hardware approaches exist, specialized hardware sensor deployments incur prohibitive procurement costs, maintenance bottlenecks, and physical queuing delays. In this investigation, we introduce the Automated Facial Recognition Attendance System (AFRAS), a real-time, end-to-end framework integrating deep metric embeddings, multi-class Support Vector Machines (SVM), and an adaptive Euclidean rejection gate. AFRAS extracts 128-dimensional L2-normalized representations using a deep ResNet-34 backbone pre-trained via triplet loss optimization. To address identity discrimination over an open gallery of enrolled individuals while categorically rejecting non-enrolled candidates, we construct a dual-stage decision mechanism combining an RBF-kernel SVM classifier with an empirical distance-gated threshold (&tau; = 0.45). The system is coupled to an asynchronous, multi-role Flask and SQLite web dashboard supporting automated student ingestion, real-time webcam frame acquisition, multi-subject scheduling, and low-attendance alerts. Rigorous empirical evaluation across 471 held-out test face images from 31 evaluated identities demonstrates a Top-1 recognition accuracy of 98.3%, a Top-3 SVM accuracy of 99.6%, and a weighted F1-score of 99.0%. Crucially, the entire pipeline operates on commodity multi-core CPUs without requiring dedicated GPU acceleration, maintaining an inference latency of approximately 120 ms per frame. The complete repository, deterministic evaluation protocols, pre-built gallery checkpoint, and reproducibility artifacts are publicly released at https://github.com/teerth-iitj/Automated_Facial_Recognition_System.
+    Taking attendance manually in classrooms is slow, interrupts teaching, and leaves room for proxy entries or clerical mistakes. In this project, we built the <b>Automated Face Recognition System</b>, a practical web-based attendance application that identifies students from live webcam captures, uploaded photographs, and recorded classroom videos on standard CPU laptops without needing a GPU. Our recognition pipeline uses a pretrained ResNet-based deep face embedding model (via <code>dlib</code> and <code>face_recognition</code>) to convert each detected face into a compact 128-number representation. On top of these face encodings, we train a Support Vector Machine (SVM) with an RBF kernel to tell enrolled individuals apart, paired with a minimum face-distance check (threshold 0.45) that rejects unfamiliar faces as <code>&lt;unknown&gt;</code>. The backend is built with Flask and SQLite, offering separate dashboards for administrators and faculty, course and semester management, automatic duplicate-attendance prevention, and CSV report downloads. We test our model on a dataset of 2,460 supported photos split deterministically into 1,983 training photos and 477 held-out test photos. Out of 471 valid detected test faces, the system achieves <b>98.3% Top-1 accuracy</b> (463 out of 471 photos correctly recognized and accepted), <b>99.6% Top-3 SVM accuracy</b>, and a <b>0.990 weighted F1-score</b>, with zero wrong identity swaps among all accepted predictions. All source code, environment files, prebuilt checkpoint, and reproducibility instructions are available at <code>https://github.com/teerth-iitj/Automated_Facial_Recognition_System</code>.
   </div>
 </div>
 
@@ -249,663 +267,596 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <h2 class="sec-heading">1. Introduction</h2>
 <p>
-Academic attendance verification remains an essential administrative requirement across educational institutions globally, serving as a critical metric for student engagement, accreditation compliance, financial aid eligibility, and academic evaluation. Nevertheless, traditional modalities such as paper sheet signing and manual verbal roll-calls suffer from acute operational limitations:
-</p>
-<p class="no-indent">
-1. <i>Temporal Inefficiency:</i> In large-cohort lectures comprising 100 to 300 students, roll-call procedures consume between 10% and 15% of instructional contact time.<br>
-2. <i>Susceptibility to Proxy Attendance:</i> Physical signature registers are notoriously vulnerable to peer forgery, compromising institutional record integrity.<br>
-3. <i>Administrative Bottlenecks:</i> Transcribing handwritten rosters into central database systems introduces human transcription error and substantial reporting delays.
+Recording student attendance is an everyday requirement across universities and colleges. In most classrooms, attendance is still taken by calling out names or passing around a paper sign-in sheet. Both approaches create practical difficulties: calling out names wastes valuable lecture time in large classes, while paper sheets are easy to forge through proxy signatures and require tedious manual entry into spreadsheets afterward.
 </p>
 <p>
-Biometric interventions, notably fingerprint scanning and RFID cards, offer partial remedies but introduce alternate operational vulnerabilities. Fingerprint scanners suffer from mechanical wear, sanitary concerns during seasonal outbreaks, and queuing bottlenecks at lecture hall entrances. RFID cards are readily shared among students, failing to eliminate the proxy phenomenon.
+Hardware biometric options like fingerprint scanners or RFID smart cards solve some of these issues, yet bring new drawbacks. Fingerprint terminals require physical contact and create long queues outside lecture halls, whereas RFID cards can simply be handed to a friend to mark attendance on someone else's behalf.
 </p>
 <p>
-Computer vision methodologies provide a non-intrusive, contactless, and auditable alternative. While modern deep convolutional neural networks (CNNs) have advanced facial verification benchmarks beyond human-level capabilities on constrained benchmarks, deploying these architectures in institutional classroom environments presents practical challenges:
+Camera-based facial recognition provides a cleaner, contactless alternative. A faculty member can capture a quick classroom snapshot, stream from a laptop webcam, or upload a short clip, and have attendance logged automatically within seconds. However, building a system that works smoothly in a real academic setting involves several practical design requirements:
 </p>
-<p class="no-indent">
-&bull; <i>Small-Sample Gallery Regimes:</i> Educational rosters typically provide only one to a few enrollment photographs per student, prohibiting end-to-end backpropagation training.<br>
-&bull; <i>Hardware Constraints:</i> Academic institutions cannot feasibly provision high-end GPU workstations in every seminar room and lecture hall.<br>
-&bull; <i>Open-Set Rejection:</i> The system must robustly identify legitimate enrolled students while categorically refusing visitors, faculty, or unregistered candidates as <code>&lt;unknown&gt;</code>.
-</p>
+<ul class="clean-list">
+  <li><b>Works with uneven photo counts:</b> Some people in a department dataset have over 100 photos, while others only have a single enrollment picture. Training a deep neural network from scratch is impractical under these conditions.</li>
+  <li><b>Runs on normal laptops:</b> Classrooms and faculty laptops typically do not have dedicated GPUs, so both gallery creation and live recognition must run comfortably on standard multi-core CPUs.</li>
+  <li><b>Safely ignores strangers:</b> If an unregistered visitor walks past the camera or a blurry background face is picked up, the system must refuse to guess rather than falsely marking a student present.</li>
+  <li><b>Organized around real classes:</b> Recognition alone is not enough; faculty need a clean interface to pick their semester and subject, review marked entries, avoid double-counting on the same day, and export records as CSV files.</li>
+</ul>
 <p>
-To resolve these interrelated challenges, this paper presents <b>AFRAS</b> (Automated Facial Recognition Attendance System). AFRAS decouples deep metric feature representation from non-linear decision boundary formulation, pairing a frozen ResNet-34 metric extractor with a multi-class Support Vector Machine (SVM) equipped with a Radial Basis Function (RBF) kernel and a Euclidean minimum-distance gating operator.
+To meet these needs, we built a complete, self-contained application combining pretrained face embeddings, an RBF-SVM classifier with a distance safety gate, and a role-based Flask web portal backed by SQLite.
 </p>
 
-<h2 class="sec-heading">2. Related Work</h2>
-
-<h3 class="subsec-heading">2.1. Classical Biometric Descriptors</h3>
+<h2 class="sec-heading">2. Background and Related Work</h2>
 <p>
-Early facial recognition methodologies depended upon linear subspace transformations. Turk and Pentland [1] formulated Eigenfaces via Principal Component Analysis (PCA), projecting pixel-space covariance into orthogonal eigenvectors capturing maximal variance. Belhumeur et al. [2] expanded upon this foundation with Fisherfaces, utilizing Linear Discriminant Analysis (LDA) to maximize the ratio of between-class scatter to within-class scatter. Ahonen et al. [3] proposed Local Binary Patterns Histograms (LBPH), evaluating micro-spatial texture features robust against monotonic grayscale variations. While computationally frugal, these shallow handcrafted features exhibit acute vulnerability to unconstrained pose rotations, severe ambient illumination gradients, and facial expressions.
-</p>
-
-<h3 class="subsec-heading">2.2. Deep Metric Representation Learning</h3>
-<p>
-The advent of deep convolutional networks revolutionized biometric vision. Taigman et al. [4] presented DeepFace, employing piecewise affine alignment and large-scale classification cross-entropy over 4 million face exemplars. Schroff, Kalenichenko, and Philbin [5] introduced FaceNet, discarding classification cross-entropy in favor of direct metric learning using the triplet loss function:
-</p>
-<div class="equation">
-  &sum;<sub>i</sub><sup>N</sup> [ ||f(x<sub>i</sub><sup>a</sup>) - f(x<sub>i</sub><sup>p</sup>)||<sub>2</sub><sup>2</sup> - ||f(x<sub>i</sub><sup>a</sup>) - f(x<sub>i</sub><sup>n</sup>)||<sub>2</sub><sup>2</sup> + &alpha; ]<sub>+</sub>
-  <span class="eq-num">(1)</span>
-</div>
-<p class="no-indent">
-where <i>x<sub>i</sub><sup>a</sup></i>, <i>x<sub>i</sub><sup>p</sup></i>, and <i>x<sub>i</sub><sup>n</sup></i> represent anchor, positive, and negative face samples respectively, mapped into a hyperspherical manifold of dimension <i>d</i> = 128 constrained by unit L2 norm ||<i>f</i>(<i>x</i>)||<sub>2</sub> = 1, enforced by margin &alpha;.
+Early face recognition methods such as Eigenfaces [1] and Fisherfaces [2] compressed face images into linear subspaces using statistical projections, while Local Binary Patterns Histograms (LBPH) [3] compared local pixel textures. Although fast, these classic methods struggle when lighting changes, heads tilt, or facial expressions vary.
 </p>
 <p>
-Building upon FaceNet's metric paradigm, King [6, 7] developed the dlib deep face recognition architecture based on a ResNet-34 backbone trained across 3 million face images. This network achieves 99.38% verification accuracy on the standard Labeled Faces in the Wild (LFW) benchmark, providing high-fidelity, compact descriptor vectors that execute efficiently on commodity CPU SIMD instructions. Deng et al. [9] and Wang et al. [10] further explored angular margins (ArcFace, CosFace) on hyperspheres, affirming the superiority of normalized latent metric spaces.
-</p>
-
-<h3 class="subsec-heading">2.3. Classification in Latent Embedding Manifolds</h3>
-<p>
-When mapping test descriptors into enrolled galleries, nearest neighbor (1-NN) Euclidean matching is computationally trivial but sensitive to local centroid drift in unbalanced class distributions. Support Vector Machines [8, 14] construct optimal separating hyperplanes maximizing the functional margin:
-</p>
-<div class="equation">
-  min<sub>w,b,&xi;</sub> (1/2)||w||<sup>2</sup> + C &sum;<sub>i</sub> &xi;<sub>i</sub>
-  <span class="eq-num">(2)</span>
-</div>
-<p class="no-indent">
-subject to <i>y<sub>i</sub>(w &middot; &phi;(x<sub>i</sub>) + b) &ge; 1 - &xi;<sub>i</sub></i>. By projecting 128-d unit vectors through an RBF kernel <i>K(u, v) = exp(-&gamma;||u - v||<sup>2</sup>)</i>, non-linear class partitions can be established among densely packed identity clusters, outperforming simple cosine or Euclidean centroids.
-</p>
-
-<h3 class="subsec-heading">2.4. Smart Attendance Architectures</h3>
-<p>
-Multiple investigators have explored automated attendance systems [11, 12]. However, prior frameworks frequently rely on monolithic client-side scripts, lack multi-role enterprise security abstractions, fail to address open-set rejection rigorously, or require persistent GPU cloud connections incompatible with institutional air-gapped deployments. AFRAS addresses each of these architectural shortcomings directly.
-</p>
-
-<h2 class="sec-heading">3. System Architecture and Methodology</h2>
-
-<div class="figure-box">
-  <div style="text-align: center; font-family: monospace; font-size: 6.8pt; line-height: 8.5pt;">
-    [Video Frame / Upload] &rarr; [Max-Dimension Lanczos Downscale (800px)]<br>
-    &darr;<br>
-    [dlib 5-Point HOG / CNN Face Localization (upsample=1)]<br>
-    &darr;<br>
-    [ResNet-34 Feature Extractor &rarr; 128-d L2 Unit Vector q &isin; &real;<sup>128</sup>]<br>
-    &darr;<br>
-    +-------------------------------------------------------------+<br>
-    | Dual-Stage Inference Engine                                  |<br>
-    | 1. Euclidean Gate: d* = min<sub>i</sub> ||q - g<sub>i</sub>||<sub>2</sub>                         |<br>
-    |    IF d* &gt; &tau; (0.45) &rarr; Emit &lt;unknown&gt; (Open-Set Reject)         |<br>
-    | 2. RBF-SVM Ranker: y* = argmax<sub>c</sub> &sum;<sub>j</sub> &alpha;<sub>j</sub> y<sub>j</sub> K(s<sub>j</sub>, q) + b       |<br>
-    |    IF d* &le; &tau; &rarr; Emit Predicted Identity y*                    |<br>
-    +-------------------------------------------------------------+<br>
-    &darr;<br>
-    [Flask REST Controller &rarr; SQLite3 ACID Attendance Storage]<br>
-    &darr;<br>
-    [Role-Based Admin / Faculty Dashboard + CSV Export + Warning Engine]
-  </div>
-  <div class="figure-caption">
-    <span class="figure-title">Figure 1.</span> Comprehensive end-to-end dataflow pipeline of AFRAS, demonstrating the dual-stage Euclidean-SVM inference engine and relational database integration.
-  </div>
-</div>
-
-<h3 class="subsec-heading">3.1. Face Detection and Scale Normalization</h3>
-<p>
-Input imagery obtained via live MJPEG video streams (HTTP <code>/video_feed</code>) or discrete HTTP multipart uploads exhibits arbitrary resolution, varying from 720p webcam streams to 12-megapixel smartphone photographs. Unconstrained high-resolution inputs severely degrade inference throughput without conferring proportional detection gain. AFRAS applies adaptive dimension scaling:
-</p>
-<div class="equation">
-  s = min(1.0, S<sub>max</sub> / max(H, W))
-  <span class="eq-num">(3)</span>
-</div>
-<p class="no-indent">
-where <i>S<sub>max</sub> = 800</i> pixels. Bilinear Lanczos interpolation is utilized to downscale the image matrix while preserving sharp facial feature gradients.
+Modern approaches rely on deep convolutional neural networks trained to map faces onto compact numerical lists called embeddings. DeepFace [4] and FaceNet [5] showed that training networks so photos of the same person sit close together in embedding space yields human-level verification accuracy. The <code>dlib</code> face recognition model [6, 7] adapts a ResNet-style deep network [14] trained on millions of faces to output a 128-number embedding for any aligned face, achieving 99.38% accuracy on the Labeled Faces in the Wild (LFW) benchmark [12].
 </p>
 <p>
-Faces are detected using dlib's frontal face directional gradient (HOG) detector combined with a linear SVM window evaluator [16]. To guarantee the recovery of small or distant faces in auditorium back rows, the detector performs single-octave upsampling (<code>number_of_times_to_upsample = 1</code>). For images exhibiting multiple face candidates during gallery compilation, AFRAS resolves ambiguity by computing bounding box area <i>A<sub>k</sub> = (bottom<sub>k</sub> - top<sub>k</sub>) &times; (right<sub>k</sub> - left<sub>k</sub>)</i> and isolating the maximal area candidate:
+Instead of retraining this large neural network on small classroom datasets, a widely adopted strategy is transfer learning with fixed embeddings: extract the 128-number vector from a pretrained model, and train a lightweight classical classifier such as a Support Vector Machine (SVM) [8, 13] on top. SVMs with an RBF kernel excel at finding smooth, curved boundaries in 128-dimensional space even when sample counts vary significantly across people. Prior campus attendance prototypes [10, 11] often stop at standalone command-line scripts; our project delivers a full multi-user web platform alongside reproducible training, splitting, and held-out evaluation tools.
 </p>
-<div class="equation">
-  B* = argmax<sub>B<sub>k</sub></sub> Area(B<sub>k</sub>)
-  <span class="eq-num">(4)</span>
-</div>
 
-<h3 class="subsec-heading">3.2. Deep Metric Feature Projection</h3>
+<h2 class="sec-heading">3. How the Recognition Model Works</h2>
 <p>
-Given normalized face region <i>B*</i>, affine alignment is conducted using 5-point facial landmark coordinates (outer eye corners, nose base, and mouth corners) to rectify in-plane roll rotations. The aligned crop is passed through the pre-trained ResNet-34 deep convolutional backbone [15]. The final dense layer produces an unnormalized vector <i>z &isin; &real;<sup>128</sup></i>, which is mapped to the unit hypersphere:
-</p>
-<div class="equation">
-  q = z / ||z||<sub>2</sub>, &nbsp;&nbsp;&nbsp; ||q||<sub>2</sub> = 1.0
-  <span class="eq-num">(5)</span>
-</div>
-<p class="no-indent">
-This normalization ensures that Euclidean distance <i>||u - v||<sub>2</sub></i> and cosine similarity <i>cos(&theta;)</i> maintain a direct monotonic equivalence:
-</p>
-<div class="equation">
-  ||u - v||<sub>2</sub><sup>2</sup> = ||u||<sup>2</sup> + ||v||<sup>2</sup> - 2(u &middot; v) = 2 - 2 cos(u, v)
-  <span class="eq-num">(6)</span>
-</div>
-
-<h3 class="subsec-heading">3.3. Parallel Gallery Compilation</h3>
-<p>
-To construct the institutional gallery without blocking system execution, gallery compilation is orchestrated via <code>concurrent.futures.ProcessPoolExecutor</code> over <i>W = min(4, N<sub>cpu</sub>)</i> worker processes. For each file in <code>Dataset/</code>, identities are extracted from canonical filename structures:
-</p>
-<div class="equation">
-  Name = regex_replace(Basename, r'(_\d+|\s*\(\d+\))$', '')
-  <span class="eq-num">(7)</span>
-</div>
-<p class="no-indent">
-During feature extraction, an optional jitter augmentation parameter <i>J</i> computes encodings across <i>J</i> random affine perturbations and averages the resulting unit vectors. All valid tuples <i>(q<sub>i</sub>, y<sub>i</sub>)</i> are serialized alongside a fitted RBF-SVM model into <code>face_encodings.pkl</code> (~5.8 MB).
+Our recognition pipeline intentionally separates <i>face feature extraction</i> (handled by a frozen pretrained deep network) from <i>identity classification</i> (handled by our trained RBF-SVM and distance safety gate). Figure 1 illustrates every step from raw input photos to database storage.
 </p>
 
 <div class="figure-box">
-  <div class="figure-title">Algorithm 1: Dual-Stage Euclidean-SVM Recognition & Ingestion</div>
-  <pre class="code-box">
-<b>Require:</b> Query frame <i>I</i>, Gallery embeddings <i>G={g_i}</i>, SVM model <i>M</i>,
-         Rejection threshold <i>&tau; = 0.45</i>, Course ID <i>C</i>, Faculty ID <i>F</i>
- 1: <i>I_scaled</i> &larr; Resize(<i>I</i>, max_dim=800)
- 2: <i>Boxes</i> &larr; FaceLocations(<i>I_scaled</i>, upsample=1)
- 3: <b>if</b> |<i>Boxes</i>| == 0 <b>then return</b> []
- 4: <i>Results</i> &larr; []
- 5: <b>for each</b> <i>b</i> in <i>Boxes</i> <b>do</b>
- 6:    <i>q</i> &larr; ExtractEmbedding(<i>I_scaled</i>, <i>b</i>) &isin; &real;<sup>128</sup>, ||<i>q</i>||_2 = 1.0
- 7:    <i>d*</i> &larr; min<sub>g &isin; G</sub> ||<i>q</i> - <i>g</i>||_2
- 8:    <b>if</b> <i>d*</i> &gt; <i>&tau;</i> <b>then</b>
- 9:       <i>Results</i>.append((<i>b</i>, "&lt;unknown&gt;", <i>d*</i>, Rejected))
-10:    <b>else</b>
-11:       <i>y_pred</i>, <i>probs</i> &larr; <i>M</i>.Predict(<i>q</i>)
-12:       <i>Results</i>.append((<i>b</i>, <i>y_pred</i>, <i>d*</i>, Accepted))
-13:       <b>if</b> NotLoggedToday(<i>y_pred</i>, <i>C</i>) <b>then</b>
-14:          InsertAttendance(<i>y_pred</i>, <i>C</i>, <i>F</i>, Now())
-15:       <b>end if</b>
-16:    <b>end if</b>
-17: <b>end for</b>
-18: <b>return</b> <i>Results</i>
-  </pre>
+  <svg viewBox="0 0 330 225" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#222"/>
+      </marker>
+    </defs>
+    <!-- Box 1 -->
+    <rect x="35" y="4" width="260" height="26" rx="4" fill="#eef3fc" stroke="#2457c5" stroke-width="1"/>
+    <text x="165" y="15" font-family="Times New Roman" font-size="8.5" font-weight="bold" text-anchor="middle" fill="#111">1. Input Image / Webcam / Video Frame</text>
+    <text x="165" y="25" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#444">Resize longest side to max 800 px (LANCZOS)</text>
+    <line x1="165" y1="30" x2="165" y2="41" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Box 2 -->
+    <rect x="35" y="42" width="260" height="26" rx="4" fill="#eef3fc" stroke="#2457c5" stroke-width="1"/>
+    <text x="165" y="53" font-family="Times New Roman" font-size="8.5" font-weight="bold" text-anchor="middle" fill="#111">2. Face Detection (dlib HOG + upsample)</text>
+    <text x="165" y="63" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#444">Locate face boxes; keep largest face in training/eval</text>
+    <line x1="165" y1="68" x2="165" y2="79" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Box 3 -->
+    <rect x="35" y="80" width="260" height="26" rx="4" fill="#eef3fc" stroke="#2457c5" stroke-width="1"/>
+    <text x="165" y="91" font-family="Times New Roman" font-size="8.5" font-weight="bold" text-anchor="middle" fill="#111">3. Pretrained ResNet Face Encoding</text>
+    <text x="165" y="101" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#444">Convert each face into 128 numerical features</text>
+    <line x1="165" y1="106" x2="165" y2="117" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Box 4 -->
+    <rect x="35" y="118" width="260" height="26" rx="4" fill="#f4fbfa" stroke="#0f766e" stroke-width="1"/>
+    <text x="165" y="129" font-family="Times New Roman" font-size="8.5" font-weight="bold" text-anchor="middle" fill="#111">4. RBF-SVM Identity Classifier</text>
+    <text x="165" y="139" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#444">Predict closest matching enrolled person name</text>
+    <line x1="165" y1="144" x2="165" y2="155" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Box 5 -->
+    <rect x="35" y="156" width="260" height="26" rx="4" fill="#fff8eb" stroke="#b45309" stroke-width="1"/>
+    <text x="165" y="167" font-family="Times New Roman" font-size="8.5" font-weight="bold" text-anchor="middle" fill="#111">5. Distance Safety Gate (threshold &lt; 0.45)</text>
+    <text x="165" y="177" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#444">Check distance to predicted person's stored photos</text>
+
+    <!-- Branching arrows -->
+    <line x1="105" y1="182" x2="80" y2="195" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="225" y1="182" x2="250" y2="195" stroke="#222" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Accepted -->
+    <rect x="10" y="196" width="145" height="24" rx="3" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+    <text x="82.5" y="206" font-family="Times New Roman" font-size="7.8" font-weight="bold" text-anchor="middle" fill="#065f46">Pass: Mark Attendance</text>
+    <text x="82.5" y="216" font-family="Times New Roman" font-size="6.8" text-anchor="middle" fill="#065f46">Log in SQLite (once per day)</text>
+
+    <!-- Rejected -->
+    <rect x="175" y="196" width="145" height="24" rx="3" fill="#fef2f2" stroke="#b91c1c" stroke-width="1"/>
+    <text x="247.5" y="206" font-family="Times New Roman" font-size="7.8" font-weight="bold" text-anchor="middle" fill="#7f1d1d">Reject: &lt;unknown&gt;</text>
+    <text x="247.5" y="216" font-family="Times New Roman" font-size="6.8" text-anchor="middle" fill="#7f1d1d">Skip unrecognized / blurry face</text>
+  </svg>
   <div class="figure-caption">
-    Formal operational procedure detailing concurrent face acquisition, distance gating, non-linear classification, and deduplicated attendance insertion.
+    <span class="figure-title">Figure 1.</span> Recognition pipeline shared across offline evaluation (<code>evaluate_model.py</code>) and live web attendance (<code>app.py</code>).
   </div>
 </div>
 
-<h3 class="subsec-heading">3.4. Dual-Stage Open-Set Inference Engine</h3>
+<h3 class="subsec-heading">3.1. Image Resizing and Face Detection</h3>
 <p>
-Standard multi-class SVM classifiers are closed-set operators; they partition the entire &real;<sup>128</sup> space among known classes, assigning any arbitrary out-of-distribution input to whichever hyperplane boundary it falls into with highest margin. In an academic institution, this behavior would erroneously mark visiting parents, unauthorized persons, or faculty members as enrolled students.
+High-resolution photos from modern phone cameras slow down processing unnecessarily, while aggressively shrunk images make distant faces too blurry to detect. In earlier runs of our project, images were capped at 400 pixels, which caused smaller faces to be missed. We raised the maximum dimension limit to <b>800 pixels</b> (using Pillow's LANCZOS resampling) and enabled <code>number_of_times_to_upsample=1</code> in <code>dlib</code>'s Histogram of Oriented Gradients (HOG) face detector. Together, these adjustments allow smaller faces to survive downscaling and get detected reliably.
 </p>
 <p>
-AFRAS implements a dual-stage decision architecture:
+During dataset encoding and evaluation, some photos contain background people in addition to the main subject. Instead of throwing away multi-face photos, our scripts compute the area of each detected face box and keep the largest face. Photos where zero faces are found are safely skipped and logged.
 </p>
-<p class="no-indent">
-<b>Stage 1: Minimum-Distance Metric Gating.</b> Given query encoding <i>q</i>, compute the minimum Euclidean distance to all enrolled gallery exemplars <i>G = {g<sub>1</sub>, g<sub>2</sub>, ..., g<sub>M</sub>}</i>:
+
+<h3 class="subsec-heading">3.2. 128-Dimensional Face Embeddings</h3>
+<p>
+Once a face box is located, <code>face_recognition</code> [9] aligns the eyes, nose, and mouth landmarks and passes the cropped face through <code>dlib</code>'s pretrained ResNet-based embedding network. The network outputs a list of <b>128 numbers</b> (a 128-dimensional feature vector) summarizing the person's facial geometry. Photos of the same person under different lighting or expressions map close together in this 128-number space, while different people map further apart.
 </p>
-<div class="equation">
-  d*(q, G) = min<sub>1 &le; i &le; M</sub> ||q - g<sub>i</sub>||<sub>2</sub>
-  <span class="eq-num">(8)</span>
+<p>
+We keep the weights of this deep neural network frozen rather than retraining them. Keeping the feature extractor fixed avoids overfitting on individuals who have only a few photos and keeps training fast on a normal laptop CPU. An optional <code>--jitters</code> parameter averages multiple slightly shifted crops per photo for extra stability (set to <code>1</code> by default for fast builds).
+</p>
+
+<h3 class="subsec-heading">3.3. Parallel Gallery Building &amp; RBF-SVM Training</h3>
+<p>
+To build the face gallery across nearly two thousand photos without waiting on a single CPU core, <code>train_model.py</code> runs image encoding in parallel using Python's <code>ProcessPoolExecutor</code> (defaulting to up to 4 workers). Each valid photo produces one 128-number encoding paired with the person's normalized name.
+</p>
+<p>
+After all training photos are encoded, we train a Support Vector Machine classifier from <code>scikit-learn</code> using a Radial Basis Function kernel (<code>SVC(kernel="rbf", C=1.0, gamma="scale")</code>). Intuitively, the RBF-SVM learns curved separation regions around each enrolled person in the 128-number feature space (the final trained model retains 1,395 support vectors across the gallery). All encodings, person names, training filenames, and the trained SVM are saved into a single portable checkpoint file, <code>face_encodings.pkl</code> (~5.8 MB), via <code>joblib</code>. A <code>--reuse-encodings</code> flag also allows retraining the SVM in seconds directly from saved encodings without re-reading raw photos.
+</p>
+
+<h3 class="subsec-heading">3.4. Distance Safety Gate (&lt;unknown&gt; Rejection)</h3>
+<p>
+A standard SVM classifier is closed-set: it always picks whichever enrolled person is closest, even when a stranger steps in front of the camera. To block false attendance entries, both <code>app.py</code> and <code>evaluate_model.py</code> apply a two-step verification rule:
+</p>
+<ol class="clean-list">
+  <li>The RBF-SVM predicts the most likely enrolled name for a detected face.</li>
+  <li>The system fetches all stored gallery encodings for that predicted name and measures the face distance to each one using <code>face_recognition.face_distance</code>.</li>
+  <li>If the smallest distance is strictly below our deployment threshold of <b>0.45</b>, the prediction is accepted and attendance is marked. Otherwise, the face is rejected as <code>&lt;unknown&gt;</code>.</li>
+</ol>
+<p>
+Combining the SVM with this distance check lets the classifier resolve similar-looking enrolled students while keeping unregistered visitors out.
+</p>
+
+<h3 class="subsec-heading">3.5. Training vs. Live Classroom Inference</h3>
+<p>
+While training and evaluation always isolate the single largest face per photo (since each dataset photo is labeled with one person's name), live attendance in <code>app.py</code> works slightly differently. In <code>recognize_from_rgb_image()</code>, the system scans <i>all</i> detected faces inside a classroom photo, webcam snapshot, or video frame. Each face is independently passed through the RBF-SVM and the 0.45 distance gate, allowing a single group photograph to mark multiple students present simultaneously.
+</p>
+
+<h2 class="sec-heading">4. Web Application and System Design</h2>
+<p>
+To make face recognition practical for everyday classroom use, we developed a full-stack Flask web application (<code>app.py</code>) connected to a local SQLite database (<code>attendance.db</code>) with foreign key checks enabled. Starting the server via <code>start.bat</code>, <code>run_all.py</code>, or <code>python app.py</code> automatically creates the tables, seeds default credentials (<code>admin</code> / <code>admin123</code> and <code>faculty</code> / <code>faculty123</code>), imports student user entries from the gallery names, migrates any legacy <code>attendance.csv</code> data if present, and opens Chrome. Figure 2 shows the user workflow across roles.
+</p>
+
+<div class="figure-box">
+  <svg viewBox="0 0 330 140" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+    <defs>
+      <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#222"/>
+      </marker>
+    </defs>
+    <!-- Admin Box -->
+    <rect x="6" y="8" width="145" height="54" rx="4" fill="#f0fdf4" stroke="#15803d" stroke-width="1"/>
+    <text x="78.5" y="20" font-family="Times New Roman" font-size="8.2" font-weight="bold" text-anchor="middle" fill="#14532d">Admin Role (/admin/dashboard)</text>
+    <text x="78.5" y="31" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; Manage faculty accounts</text>
+    <text x="78.5" y="41" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; Create semesters &amp; subjects</text>
+    <text x="78.5" y="51" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; Assign subjects to faculty</text>
+
+    <!-- Faculty Box -->
+    <rect x="179" y="8" width="145" height="54" rx="4" fill="#eef3fc" stroke="#2457c5" stroke-width="1"/>
+    <text x="251.5" y="20" font-family="Times New Roman" font-size="8.2" font-weight="bold" text-anchor="middle" fill="#1e3a8a">Faculty Role (/faculty/dashboard)</text>
+    <text x="251.5" y="31" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; Pick assigned semester &amp; subject</text>
+    <text x="251.5" y="41" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; Live webcam / photo / video capture</text>
+    <text x="251.5" y="51" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#222">&bull; View summary &amp; export CSV</text>
+
+    <!-- Arrows to SQLite -->
+    <line x1="78.5" y1="62" x2="125" y2="88" stroke="#222" stroke-width="1" marker-end="url(#arr2)"/>
+    <line x1="251.5" y1="62" x2="205" y2="88" stroke="#222" stroke-width="1" marker-end="url(#arr2)"/>
+
+    <!-- SQLite DB Box -->
+    <rect x="35" y="90" width="260" height="42" rx="4" fill="#f8fafc" stroke="#475569" stroke-width="1"/>
+    <text x="165" y="102" font-family="Times New Roman" font-size="8.2" font-weight="bold" text-anchor="middle" fill="#0f172a">SQLite3 Database (attendance.db)</text>
+    <text x="165" y="114" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#334155">Tables: users | semesters | subjects | faculty_subjects | attendance</text>
+    <text x="165" y="124" font-family="Times New Roman" font-size="6.8" text-anchor="middle" fill="#475569">Enforces once-per-day deduplication per student, subject, and faculty</text>
+  </svg>
+  <div class="figure-caption">
+    <span class="figure-title">Figure 2.</span> Role-based web portal architecture connecting administrative setup, faculty attendance capture, and SQLite storage.
+  </div>
 </div>
-<p class="no-indent">
-If <i>d*(q, G) &gt; &tau;</i>, where &tau; denotes the rejection threshold (calibrated at &tau; = 0.45), the prediction is immediately classified as <code>&lt;unknown&gt;</code>, and downstream database insertion is inhibited.
-</p>
-<p class="no-indent">
-<b>Stage 2: Multi-Class RBF-SVM Classification.</b> If <i>d*(q, G) &le; &tau;</i>, query <i>q</i> is submitted to the RBF-SVM classifier. The decision function evaluates the one-vs-rest (OvR) or one-vs-one (OvO) decision values:
-</p>
-<div class="equation">
-  f<sub>c</sub>(q) = &sum;<sub>j &isin; SV</sub> &alpha;<sub>j</sub><sup>c</sup> y<sub>j</sub> exp(-&gamma; ||s<sub>j</sub> - q||<sub>2</sub><sup>2</sup>) + b<sub>c</sub>
-  <span class="eq-num">(9)</span>
-</div>
-<p class="no-indent">
-The predicted identity is selected as <i>y* = argmax<sub>c</sub> f<sub>c</sub>(q)</i>. Additionally, class probabilities are ranked across all classes to supply Top-<i>k</i> confidence distributions.
-</p>
-
-<h2 class="sec-heading">4. Full-Stack Web Application Infrastructure</h2>
-
-<h3 class="subsec-heading">4.1. Relational Database Design</h3>
-<p>
-The persistence layer is implemented in SQLite3 with foreign key constraints enabled via <code>PRAGMA foreign_keys = ON</code>. The schema comprises six relational tables:
-</p>
-<p class="no-indent">
-1. <code>users</code>: Manages credentials, PBKDF2:SHA256 password hashes, and system roles (<code>admin</code>, <code>faculty</code>, <code>student</code>).<br>
-2. <code>semesters</code>: Defines academic calendar intervals.<br>
-3. <code>subjects</code>: Maps course offerings to specific semester foreign keys.<br>
-4. <code>faculty_subjects</code>: Junction table defining faculty teaching assignments.<br>
-5. <code>students</code>: Links student full names, enrollment roll identifiers, and enrolled gallery labels.<br>
-6. <code>attendance</code>: Logs timestamps (<code>YYYY-MM-DD HH:MM:SS</code>), matched student foreign keys, subject IDs, and recording faculty user IDs.
-</p>
-
-<h3 class="subsec-heading">4.2. Role-Based Access Control and Security</h3>
-<p>
-Endpoint authorization is enforced via Python function decorators (<code>@login_required</code>, <code>@roles_required('admin')</code>). Passwords are cryptographically salted and hashed using Werkzeug security primitives. Faculty members are restricted to subjects assigned specifically to their user accounts by administrative personnel. Session cookies are protected with configurable secret keys and SameSite flags.
-</p>
-
-<h3 class="subsec-heading">4.3. Streaming and Attendance De-duplication</h3>
-<p>
-Live camera capture operates via an MJPEG streaming route yielding multipart boundary buffers. For each frame, detected face bounding boxes are annotated with color-coded identifiers: green for authenticated enrolled students, and crimson red for unverified candidates (<code>&lt;unknown&gt;</code>).
-</p>
-<p>
-To prevent multiple attendance entries for a single student during a continuous 45-minute lecture stream, the logging controller implements temporal suppression:
-</p>
-<div class="equation">
-  T(student, subject, date) = Unique
-  <span class="eq-num">(10)</span>
-</div>
-<p class="no-indent">
-Subsequent detections within the same calendar day for an identical course session update confidence metadata without creating redundant ledger records.
-</p>
-
-<h3 class="subsec-heading">4.4. Defaulter Warning Engine and CSV Export</h3>
-<p>
-The dashboard dynamically aggregates student session counts against the total conducted lectures per course. The percentage attendance is computed as:
-</p>
-<div class="equation">
-  P<sub>att</sub> = (N<sub>attended</sub> / N<sub>conducted</sub>) &times; 100%
-  <span class="eq-num">(11)</span>
-</div>
-<p class="no-indent">
-If <i>P<sub>att</sub> &lt; 75.0%</i> (institutional threshold), visual warning badges are highlighted on both faculty and administrative dashboards. Complete historical attendance records can be filtered and streamed directly as RFC-4180 compliant CSV files.
-</p>
-
-<h2 class="sec-heading">5. Experimental Setup and Evaluation</h2>
-
-<h3 class="subsec-heading">5.1. Dataset Composition</h3>
-<p>
-The benchmark dataset comprises 2,463 facial images encompassing 98 unique individual identities collected under naturalistic variations in illumination, pose, facial hair, and expression. Image counts per class exhibit a realistic institutional long-tail distribution, varying from single-instance enrollments to over 60 high-variation samples per individual.
-</p>
 
 <div class="table-caption">
-  <span class="figure-title">Table 1.</span> Dataset partitioning and experimental partition parameters.
+  <span class="figure-title">Table 1.</span> Relational SQLite database tables implemented in <code>app.py</code>.
 </div>
 <table>
   <tr>
-    <th>Experimental Attribute</th>
-    <th>Statistical Value</th>
+    <th>Table Name</th>
+    <th>Columns &amp; Role in Application</th>
   </tr>
   <tr>
-    <td>Total Raw Image Corpus</td>
-    <td>2,463 images</td>
+    <td><code>users</code></td>
+    <td>Stores <code>username</code>, salted password hashes, <code>role</code> (admin, faculty, student), <code>full_name</code>, and creation timestamp.</td>
   </tr>
   <tr>
-    <td>Total Unique Identities</td>
-    <td>98 identities</td>
+    <td><code>semesters</code></td>
+    <td>Stores unique semester names (e.g., Semester 6) and timestamps.</td>
   </tr>
   <tr>
-    <td>Training Split Candidates (80%)</td>
-    <td>1,983 files</td>
+    <td><code>subjects</code></td>
+    <td>Links course subjects to a parent <code>semester_id</code> with cascading deletes.</td>
   </tr>
   <tr>
-    <td>Valid Gallery Embeddings Recovered</td>
-    <td>1,964 embeddings</td>
-  </tr>
-  <tr>
-    <td>Held-Out Test Candidates (20%)</td>
-    <td>477 files</td>
-  </tr>
-  <tr>
-    <td>Valid Held-Out Faces Detected</td>
-    <td>471 faces</td>
-  </tr>
-  <tr>
-    <td>Evaluated Multi-Sample Identities</td>
-    <td>31 identities</td>
-  </tr>
-  <tr>
-    <td>Singletons (Gallery-Only Retention)</td>
-    <td>69 identities</td>
-  </tr>
-  <tr>
-    <td>Train / Test File Overlap</td>
-    <td>0 files (Strict Zero-Leakage)</td>
+    <td><code>faculty_subjects</code></td>
+    <td>Maps each faculty account to their assigned subjects.</td>
   </tr>
   <tr class="bottom-rule">
-    <td>Random Partition Seed</td>
-    <td>42</td>
+    <td><code>attendance</code></td>
+    <td>Logs student <code>name</code>, <code>timestamp</code>, input <code>source</code> (camera/image/video), faculty ID, semester, and subject.</td>
   </tr>
 </table>
 
-<h3 class="subsec-heading">5.2. Partitioning Protocol and Zero-Leakage Guarantee</h3>
+<h3 class="subsec-heading">4.1. Input Modes and Route Architecture</h3>
 <p>
-Evaluation is governed by <code>dataset_split.py</code> using a deterministic pseudo-random seed (<code>seed = 42</code>). Identities possessing only a single photograph are allocated exclusively to the gallery to maintain maximal identity coverage; evaluating singletons on zero-shot test splits would confound closed-set discrimination with few-shot generalization. Multi-sample identities are partitioned into an 80% training gallery and a 20% disjoint held-out test partition. File hashes verify zero intersection between training and testing partitions.
+User accounts use salted password hashing via <code>werkzeug.security</code>, and endpoints are protected with <code>@login_required</code> and <code>@roles_required</code> decorators. Interactive login is enabled for admin and faculty accounts. On the faculty dashboard, three capture modes are supported:
 </p>
-
-<h3 class="subsec-heading">5.3. Evaluation Metrics</h3>
-<p>
-We evaluate performance across four primary criteria:
-</p>
-<p class="no-indent">
-1. <b>Top-1 Recognition Accuracy with Distance Rejection:</b> Measures the fraction of test samples correctly classified, where any sample with <i>d* &gt; &tau;</i> is marked as <code>&lt;unknown&gt;</code> and treated as an incorrect prediction:
-</p>
-<div class="equation">
-  Acc<sub>Top-1</sub> = (1/N<sub>test</sub>) &sum;<sub>i=1</sub><sup>N<sub>test</sub></sup> I(y<sub>pred</sub><sup>i</sup> == y<sub>true</sub><sup>i</sup> &and; d<sub>i</sub>* &le; &tau;)
-  <span class="eq-num">(12)</span>
-</div>
-<p class="no-indent">
-2. <b>Top-k SVM Accuracy:</b> Evaluates whether true class <i>y<sub>true</sub></i> appears within the <i>k</i> highest ranking SVM probability margins, assessing boundary calibration independent of the distance gate.<br>
-3. <b>Macro & Weighted Precision, Recall, and F1-Scores:</b> Quantifies performance across severe class frequency imbalances.<br>
-4. <b>Empirical Latency:</b> Assesses real-time frame rates across separate stages of the pipeline.
-</p>
-
-<h2 class="sec-heading">6. Results and Comparative Analysis</h2>
-
-<h3 class="subsec-heading">6.1. Primary Verification Results</h3>
-<p>
-Evaluating the 471 valid held-out test faces against the 1,964-embedding gallery across 31 multi-sample identities yields exceptional recognition metrics, summarized in Table 2.
-</p>
+<ul class="clean-list">
+  <li><b>Live Webcam Capture:</b> In <code>faculty_dashboard.html</code>, the browser requests camera access via WebRTC (<code>navigator.mediaDevices.getUserMedia</code>) with a device selector dropdown to switch cameras. Clicking capture draws the current video frame onto an HTML5 canvas, encodes it as JPEG, and posts it to <code>/recognize</code>.</li>
+  <li><b>Photo Upload:</b> Uploading a static photo sends it to <code>/recognize</code>, which decodes it with OpenCV and marks every recognized student present.</li>
+  <li><b>Video Upload:</b> Uploading a recorded clip to <code>/recognize-video</code> instructs OpenCV to sample every 15th frame (up to 60 sampled frames max) and merge all recognized names across the clip.</li>
+</ul>
 
 <div class="table-caption">
-  <span class="figure-title">Table 2.</span> Comprehensive performance metrics achieved on the held-out test partition at threshold &tau; = 0.45.
+  <span class="figure-title">Table 2.</span> Core Flask endpoints and automation scripts in the repository.
 </div>
 <table>
   <tr>
-    <th>Metric Dimension</th>
-    <th>Measured Score</th>
+    <th>Route / Script</th>
+    <th>Purpose</th>
   </tr>
   <tr>
-    <td>Top-1 Recognition Accuracy (Distance-Gated)</td>
-    <td><b>98.3%</b> (463 / 471)</td>
+    <td><code>/login</code>, <code>/logout</code>, <code>/health</code></td>
+    <td>Session authentication and model health status JSON</td>
+  </tr>
+  <tr>
+    <td><code>/api/faculty-users</code>, <code>/api/semesters</code>, <code>/api/subjects</code></td>
+    <td>Admin CRUD APIs for faculty accounts, semesters, and courses</td>
+  </tr>
+  <tr>
+    <td><code>/api/faculty-assignments</code>, <code>/api/faculty/context</code></td>
+    <td>Assign courses to faculty and set active classroom context</td>
+  </tr>
+  <tr>
+    <td><code>/recognize</code>, <code>/recognize-video</code></td>
+    <td>Run face recognition on uploaded photos, webcam frames, or videos</td>
+  </tr>
+  <tr>
+    <td><code>/attendance</code>, <code>/attendance/summary</code>, <code>/attendance/download</code></td>
+    <td>List records, compute today's stats, delete entries, and download CSV</td>
+  </tr>
+  <tr>
+    <td><code>run_all.py</code> &amp; <code>req.py</code></td>
+    <td>Unified CLI (<code>--train</code>, <code>--evaluate</code>, <code>--run</code>, <code>--all</code>) and package checker</td>
+  </tr>
+  <tr class="bottom-rule">
+    <td><code>start.bat</code> &amp; <code>start.ps1</code></td>
+    <td>Windows one-click bootstrap (installs <code>.venv</code>, <code>dlib-bin</code>, models, runs app)</td>
+  </tr>
+</table>
+
+<h3 class="subsec-heading">4.2. Duplicate Suppression &amp; CSV Export</h3>
+<p>
+Before writing a new attendance row, <code>already_marked_today()</code> checks whether that student already has a record for the same date, semester, subject, and faculty account. If already logged, the system informs the faculty member without inserting duplicate rows. Faculty can delete individual rows, clear their current class records, or export clean CSV attendance sheets via <code>/attendance/download</code>.
+</p>
+
+<h3 class="subsec-heading">4.3. Windows Bootstrap &amp; HTTPS Support</h3>
+<p>
+Installing <code>dlib</code> from C++ source on Windows often fails without Visual Studio build tools. To eliminate setup friction, <code>start.ps1</code> creates a local <code>.venv</code>, pins <code>setuptools&lt;81</code> (required by <code>face_recognition_models</code> for <code>pkg_resources</code>), installs precompiled <code>dlib-bin</code> wheels along with dependencies from <code>requirements.txt</code>, and fetches the upstream model weights automatically. In addition, because modern browsers block webcam access over plain HTTP on non-localhost addresses, <code>app.py</code> supports an adhoc SSL mode via <code>FLASK_HTTPS=1</code> (also wrapped in <code>run_https_5443.ps1</code> and <code>run_all.py --https</code>).
+</p>
+
+<h2 class="sec-heading">5. Dataset and Evaluation Protocol</h2>
+<p>
+To evaluate recognition accurately without any data leakage between training and testing images, we built a deterministic splitting script in <code>dataset_split.py</code>. It automatically parses person names from both flat filenames (such as <code>Person Name_0.jpg</code> or <code>Person Name (001).jpg</code>) and subfolder names.
+</p>
+<p>
+Our full dataset folder contains 2,463 files, of which <b>2,460</b> are supported image files (<code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>; 3 files with <code>.heif</code>/<code>.webp</code> extensions are ignored by the splitter). Multi-photo entries account for 2,391 photos&mdash;including local student photo sets such as Teerth (47 photos), Basab (36 photos), Marmik (32 photos), and Kashyap (30 photos), alongside public reference celebrity photos such as Brad Pitt (120), Robert Downey Jr (113), and Hugh Jackman (112)&mdash;while 69 entries are single-photo enrollments. Figure 3 visualizes the photo counts across representative dataset groups.
+</p>
+
+<div class="figure-box">
+  <svg viewBox="0 0 325 135" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+    <!-- Horizontal bar chart of representative dataset photo counts -->
+    <text x="162" y="11" font-family="Times New Roman" font-size="8" font-weight="bold" text-anchor="middle" fill="#111">Photo Counts for Sample Subjects in Dataset/ (Total: 2,460 Photos)</text>
+    <!-- Scale: max 120 -> width 180px (1.5px per photo) starting at x=95 -->
+    <text x="90" y="28" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Brad Pitt</text>
+    <rect x="95" y="20" width="180" height="9" fill="#2457c5"/>
+    <text x="279" y="28" font-family="Times New Roman" font-size="7.2" fill="#111">120</text>
+
+    <text x="90" y="42" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Robert Downey Jr</text>
+    <rect x="95" y="34" width="169.5" height="9" fill="#2457c5"/>
+    <text x="268.5" y="42" font-family="Times New Roman" font-size="7.2" fill="#111">113</text>
+
+    <text x="90" y="56" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Hugh Jackman</text>
+    <rect x="95" y="48" width="168" height="9" fill="#2457c5"/>
+    <text x="267" y="56" font-family="Times New Roman" font-size="7.2" fill="#111">112</text>
+
+    <text x="90" y="70" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Natalie Portman</text>
+    <rect x="95" y="62" width="157.5" height="9" fill="#2457c5"/>
+    <text x="256.5" y="70" font-family="Times New Roman" font-size="7.2" fill="#111">105</text>
+
+    <text x="90" y="84" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Teerth (Student)</text>
+    <rect x="95" y="76" width="70.5" height="9" fill="#0f766e"/>
+    <text x="169.5" y="84" font-family="Times New Roman" font-size="7.2" fill="#111">47</text>
+
+    <text x="90" y="98" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Basab (Student)</text>
+    <rect x="95" y="90" width="54" height="9" fill="#0f766e"/>
+    <text x="153" y="98" font-family="Times New Roman" font-size="7.2" fill="#111">36</text>
+
+    <text x="90" y="112" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Marmik (Student)</text>
+    <rect x="95" y="104" width="48" height="9" fill="#0f766e"/>
+    <text x="147" y="112" font-family="Times New Roman" font-size="7.2" fill="#111">32</text>
+
+    <text x="90" y="126" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#222">Kashyap (Student)</text>
+    <rect x="95" y="118" width="45" height="9" fill="#0f766e"/>
+    <text x="144" y="126" font-family="Times New Roman" font-size="7.2" fill="#111">30</text>
+  </svg>
+  <div class="figure-caption">
+    <span class="figure-title">Figure 3.</span> Photo distribution across sample public reference subjects (blue) and local student enrollments (teal) within the 2,460-photo dataset.
+  </div>
+</div>
+
+<div class="table-caption">
+  <span class="figure-title">Table 3.</span> Dataset photo breakdown and deterministic 80/20 split statistics from <code>dataset_split.py</code> and <code>evaluation_split.log</code>.
+</div>
+<table>
+  <tr>
+    <th>Dataset &amp; Split Metric</th>
+    <th>Observed Count</th>
+  </tr>
+  <tr>
+    <td>Total files in <code>Dataset/</code></td>
+    <td>2,463 files (2,460 supported images; 3 HEIF/WebP ignored)</td>
+  </tr>
+  <tr>
+    <td>Training split candidates (80% split + single-photo entries)</td>
+    <td>1,983 photos</td>
+  </tr>
+  <tr>
+    <td>Valid gallery face encodings saved in <code>face_encodings.pkl</code></td>
+    <td>1,964 encodings (19 skipped &mdash; no face detected)</td>
+  </tr>
+  <tr>
+    <td>Distinct enrolled names in saved gallery</td>
+    <td>98 people</td>
+  </tr>
+  <tr>
+    <td>Held-out test candidates (20% split, <code>seed=42</code>)</td>
+    <td>477 photos</td>
+  </tr>
+  <tr>
+    <td>Valid held-out test faces evaluated</td>
+    <td>471 photos (6 skipped &mdash; no face detected; 0 errors)</td>
+  </tr>
+  <tr class="bottom-rule">
+    <td>Train / test file overlap</td>
+    <td>0 photos (enforced programmatically in <code>evaluate_model.py</code>)</td>
+  </tr>
+</table>
+
+<p>
+Using a fixed random seed (<code>seed=42</code>) and a <code>20%</code> held-out split, people with multiple photos contribute 80% of their images to the training gallery and 20% to the test set. Single-photo entries are placed exclusively in the training gallery so they remain searchable in production without creating empty training classes. Before scoring, <code>evaluate_model.py</code> verifies that the <code>train_files</code> metadata inside <code>face_encodings.pkl</code> matches the deterministic split with zero filename overlap.
+</p>
+
+<h2 class="sec-heading">6. Experimental Results</h2>
+<p>
+Running <code>evaluate_model.py</code> on the saved checkpoint <code>face_encodings.pkl</code> at our deployed threshold of <code>0.45</code> produced the verified results saved in <code>evaluation_split.log</code> (Table 4).
+</p>
+
+<div class="table-caption">
+  <span class="figure-title">Table 4.</span> Held-out evaluation results across 471 valid test photos (from <code>evaluation_split.log</code> at threshold 0.45).
+</div>
+<table>
+  <tr>
+    <th>Evaluation Metric</th>
+    <th>Measured Result</th>
+  </tr>
+  <tr>
+    <td>Top-1 Accuracy (with 0.45 distance gate)</td>
+    <td><b>98.3%</b> (0.983)</td>
   </tr>
   <tr>
     <td>Top-3 SVM Class Accuracy</td>
-    <td><b>99.6%</b> (469 / 471)</td>
+    <td><b>99.6%</b> (0.996)</td>
   </tr>
   <tr>
-    <td>Distance Gate Acceptance Rate</td>
-    <td>98.3% (463 / 471)</td>
+    <td>Photos Accepted by Distance Gate</td>
+    <td><b>463 / 471</b> (98.3%)</td>
   </tr>
   <tr>
-    <td>Macro-Averaged Precision</td>
-    <td>93.8%</td>
+    <td>Wrong Identity Matches Among Accepted Photos</td>
+    <td><b>0 / 463</b> (0.0%)</td>
   </tr>
   <tr>
-    <td>Macro-Averaged Recall</td>
-    <td>91.9%</td>
-  </tr>
-  <tr>
-    <td>Macro-Averaged F1-Score</td>
-    <td>92.7%</td>
-  </tr>
-  <tr>
-    <td>Weighted-Averaged Precision</td>
-    <td><b>99.8%</b></td>
-  </tr>
-  <tr>
-    <td>Weighted-Averaged Recall</td>
-    <td>98.3%</td>
+    <td>Weighted Precision / Recall / F1</td>
+    <td><b>0.998 / 0.983 / 0.990</b></td>
   </tr>
   <tr class="bottom-rule">
-    <td>Weighted-Averaged F1-Score</td>
-    <td><b>99.0%</b></td>
+    <td>Macro Precision / Recall / F1</td>
+    <td>0.938 / 0.919 / 0.927</td>
   </tr>
 </table>
 
+<h3 class="subsec-heading">6.1. Accuracy and Distance Distribution Analysis</h3>
 <p>
-The system demonstrates remarkable discriminative stability: 29 out of the 31 evaluated identities attained 100% Top-1 recognition accuracy. Only 8 total test face images were rejected by the distance gate (classified as <code>&lt;unknown&gt;</code>); among these, 6 exhibited severe motion blur or extreme in-plane head rotations exceeding 65 degrees.
+Out of 471 valid held-out test photos, <b>463 photos</b> passed the <code>0.45</code> distance safety gate, and <b>every single one of those 463 accepted photos was predicted accurately</b> (zero false identity swaps). Across all 471 test photos, the minimum observed distance was <code>0.0000</code>, the mean distance was <code>0.3112</code>, and the maximum distance was <code>0.5314</code>. Figure 4 shows how the 471 test photo distances distribute across distance bins.
+</p>
+
+<div class="figure-box">
+  <svg viewBox="0 0 320 130" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+    <line x1="40" y1="15" x2="40" y2="100" stroke="#333" stroke-width="1"/>
+    <line x1="40" y1="100" x2="305" y2="100" stroke="#333" stroke-width="1"/>
+    <line x1="40" y1="20" x2="305" y2="20" stroke="#eee" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <line x1="40" y1="60" x2="305" y2="60" stroke="#eee" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <text x="35" y="23" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#333">250</text>
+    <text x="35" y="63" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#333">125</text>
+    <text x="35" y="102" font-family="Times New Roman" font-size="7.2" text-anchor="end" fill="#333">0</text>
+
+    <rect x="52" y="90.7" width="36" height="9.3" fill="#2457c5"/>
+    <text x="70" y="87" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">29</text>
+    <text x="70" y="111" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#333">0.00-0.20</text>
+
+    <rect x="104" y="50.4" width="36" height="49.6" fill="#2457c5"/>
+    <text x="122" y="46" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">155</text>
+    <text x="122" y="111" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#333">0.20-0.30</text>
+
+    <rect x="156" y="23.8" width="36" height="76.2" fill="#2457c5"/>
+    <text x="174" y="20" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">238</text>
+    <text x="174" y="111" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#333">0.30-0.40</text>
+
+    <rect x="208" y="86.9" width="36" height="13.1" fill="#0f766e"/>
+    <text x="226" y="83" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">41</text>
+    <text x="226" y="111" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#333">0.40-0.45</text>
+
+    <rect x="260" y="97.4" width="36" height="2.6" fill="#b91c1c"/>
+    <text x="278" y="93" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#b91c1c">8</text>
+    <text x="278" y="111" font-family="Times New Roman" font-size="7" text-anchor="middle" fill="#7f1d1d">&ge;0.45 (Rej.)</text>
+
+    <text x="172" y="125" font-family="Times New Roman" font-size="7.8" text-anchor="middle" fill="#111">Face Distance to Nearest Gallery Photo (471 Test Photos)</text>
+  </svg>
+  <div class="figure-caption">
+    <span class="figure-title">Figure 4.</span> Distribution of minimum face distances across all 471 valid held-out test photos in <code>evaluation_split.log</code>. Nearly 90% of test photos fall below 0.40.
+  </div>
+</div>
+
+<h3 class="subsec-heading">6.2. Analysis of Rejected Photos</h3>
+<p>
+Table 5 lists all 8 test photos rejected as <code>&lt;unknown&gt;</code> at threshold <code>0.45</code>. Even when rejected due to pose or lighting variations raising the distance past 0.45, the RBF-SVM still chose the correct person on 6 of those 8 photos (giving <b>469 / 471 = 99.6%</b> raw SVM Top-1 accuracy). Only 2 photos (out of 471) were misranked by the SVM, and both were safely blocked by the distance gate rather than marking the wrong person.
 </p>
 
 <div class="table-caption">
-  <span class="figure-title">Table 3.</span> Representative per-identity classification breakdown across evaluated held-out test classes.
+  <span class="figure-title">Table 5.</span> All 8 test photos rejected as <code>&lt;unknown&gt;</code> in <code>evaluation_split.log</code> (out of 471 evaluated faces).
 </div>
 <table>
   <tr>
-    <th>Identity Label</th>
-    <th>Held-Out N</th>
-    <th>Top-1 Accuracy</th>
-    <th>Mean Distance (d*)</th>
+    <th>Status</th>
+    <th>Actual Person</th>
+    <th>SVM Top Guess</th>
+    <th>Distance</th>
   </tr>
   <tr>
-    <td>Akshay Kumar</td>
-    <td>10</td>
-    <td>80.0% (2 rejected)</td>
-    <td>0.310 &plusmn; 0.118</td>
+    <td>TOP-K</td>
+    <td>charlize theron</td>
+    <td>charlize theron</td>
+    <td>0.452154</td>
   </tr>
   <tr>
-    <td>Alexandra Daddario</td>
-    <td>18</td>
-    <td>100.0%</td>
-    <td>0.331 &plusmn; 0.052</td>
+    <td>TOP-K</td>
+    <td>akshay kumar</td>
+    <td>akshay kumar</td>
+    <td>0.458980</td>
   </tr>
   <tr>
-    <td>Alia Bhatt</td>
-    <td>16</td>
-    <td>100.0%</td>
-    <td>0.312 &plusmn; 0.038</td>
+    <td>TOP-K</td>
+    <td>billie eilish</td>
+    <td>billie eilish</td>
+    <td>0.460846</td>
   </tr>
   <tr>
-    <td>Amitabh Bachchan</td>
-    <td>15</td>
-    <td>100.0%</td>
-    <td>0.246 &plusmn; 0.081</td>
+    <td>TOP-K</td>
+    <td>claire holt</td>
+    <td>claire holt</td>
+    <td>0.469990</td>
   </tr>
   <tr>
-    <td>Andy Samberg</td>
-    <td>15</td>
-    <td>100.0%</td>
-    <td>0.288 &plusmn; 0.069</td>
+    <td>MISS</td>
+    <td>akshay kumar</td>
+    <td>hrithik roshan</td>
+    <td>0.488466</td>
   </tr>
   <tr>
-    <td>Anushka Sharma</td>
-    <td>15</td>
-    <td>100.0%</td>
-    <td>0.287 &plusmn; 0.046</td>
+    <td>TOP-K</td>
+    <td>basab (1)</td>
+    <td>basab (1)</td>
+    <td>0.490899</td>
   </tr>
   <tr>
-    <td>Billie Eilish</td>
-    <td>17</td>
-    <td>100.0%</td>
-    <td>0.298 &plusmn; 0.055</td>
-  </tr>
-  <tr>
-    <td>Brad Pitt</td>
-    <td>19</td>
-    <td>100.0%</td>
-    <td>0.294 &plusmn; 0.048</td>
-  </tr>
-  <tr>
-    <td>Charlize Theron</td>
-    <td>18</td>
-    <td>100.0%</td>
-    <td>0.316 &plusmn; 0.044</td>
-  </tr>
-  <tr>
-    <td>Dwayne Johnson</td>
-    <td>17</td>
-    <td>100.0%</td>
-    <td>0.262 &plusmn; 0.057</td>
-  </tr>
-  <tr>
-    <td>Elizabeth Olsen</td>
-    <td>16</td>
-    <td>100.0%</td>
-    <td>0.299 &plusmn; 0.049</td>
-  </tr>
-  <tr>
-    <td>Henry Cavill</td>
-    <td>19</td>
-    <td>100.0%</td>
-    <td>0.281 &plusmn; 0.051</td>
-  </tr>
-  <tr>
-    <td>Hrithik Roshan</td>
-    <td>17</td>
-    <td>100.0%</td>
-    <td>0.284 &plusmn; 0.058</td>
-  </tr>
-  <tr>
-    <td>Hugh Jackman</td>
-    <td>18</td>
-    <td>100.0%</td>
-    <td>0.279 &plusmn; 0.053</td>
-  </tr>
-  <tr>
-    <td>Natalie Portman</td>
-    <td>18</td>
-    <td>100.0%</td>
-    <td>0.301 &plusmn; 0.047</td>
-  </tr>
-  <tr>
-    <td>Robert Downey Jr</td>
-    <td>19</td>
-    <td>100.0%</td>
-    <td>0.275 &plusmn; 0.054</td>
+    <td>TOP-K</td>
+    <td>anushka sharma</td>
+    <td>anushka sharma</td>
+    <td>0.500236</td>
   </tr>
   <tr class="bottom-rule">
-    <td>Tom Cruise</td>
-    <td>18</td>
-    <td>100.0%</td>
-    <td>0.288 &plusmn; 0.049</td>
+    <td>MISS</td>
+    <td>tarun yadav</td>
+    <td>basab (1)</td>
+    <td>0.531379</td>
   </tr>
 </table>
 
-<h3 class="subsec-heading">6.2. Distance Threshold Sensitivity Sweep</h3>
+<h3 class="subsec-heading">6.3. Distance Threshold Sweep &amp; Resolution Gain</h3>
 <p>
-To evaluate the calibration of the Euclidean distance gate &tau;, an empirical parameter sweep was executed over &tau; &isin; [0.30, 0.70] with a step size of 0.05. The resulting recognition accuracies are documented in Table 4.
+<code>evaluate_model.py</code> sweeps five distance cutoffs from <code>0.35</code> to <code>0.55</code> on the 471 held-out photos (Figure 5). At <code>0.35</code>, strict filtering drops accuracy to 72.8%. Raising the cutoff to <code>0.45</code> brings accuracy to <b>98.3%</b>. While <code>0.55</code> reaches 99.6% on enrolled test photos in the diagnostic sweep, a looser cutoff increases the chance of accepting unknown visitors in a live room, so <b>0.45</b> is retained as the deployment default.
+</p>
+<p>
+Comparing earlier logs (<code>training_split.log</code>, which saved 1,769 encodings) with the updated <code>train_model.py</code> pipeline (which saved 1,964 encodings) highlights the benefit of raising max image size from 400 px to 800 px, adding upsampling, and picking the largest face in group shots: nearly 200 extra valid faces were recovered from the same split.
 </p>
 
-<div class="table-caption">
-  <span class="figure-title">Table 4.</span> Rejection threshold sensitivity sweep and resulting Top-1 accuracy.
+<div class="figure-box">
+  <svg viewBox="0 0 320 130" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+    <line x1="45" y1="15" x2="45" y2="100" stroke="#333" stroke-width="1"/>
+    <line x1="45" y1="100" x2="300" y2="100" stroke="#333" stroke-width="1"/>
+    <line x1="45" y1="20" x2="300" y2="20" stroke="#e5e5e5" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <line x1="45" y1="47" x2="300" y2="47" stroke="#e5e5e5" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <line x1="45" y1="73" x2="300" y2="73" stroke="#e5e5e5" stroke-width="0.7" stroke-dasharray="2,2"/>
+    <text x="40" y="23" font-family="Times New Roman" font-size="7.5" text-anchor="end" fill="#333">100%</text>
+    <text x="40" y="50" font-family="Times New Roman" font-size="7.5" text-anchor="end" fill="#333">90%</text>
+    <text x="40" y="76" font-family="Times New Roman" font-size="7.5" text-anchor="end" fill="#333">80%</text>
+    <text x="40" y="103" font-family="Times New Roman" font-size="7.5" text-anchor="end" fill="#333">70%</text>
+
+    <polyline points="75,92.5 125,47.7 175,24.5 225,21.6 275,21.1" fill="none" stroke="#2457c5" stroke-width="1.8"/>
+    <circle cx="75" cy="92.5" r="3" fill="#2457c5"/>
+    <circle cx="125" cy="47.7" r="3" fill="#2457c5"/>
+    <circle cx="175" cy="24.5" r="4" fill="#059669" stroke="#fff" stroke-width="1"/>
+    <circle cx="225" cy="21.6" r="3" fill="#2457c5"/>
+    <circle cx="275" cy="21.1" r="3" fill="#b45309"/>
+
+    <text x="75" y="85" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">72.8%</text>
+    <text x="125" y="41" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">89.6%</text>
+    <text x="175" y="16" font-family="Times New Roman" font-size="7.5" font-weight="bold" text-anchor="middle" fill="#065f46">98.3% (Deployed)</text>
+    <text x="225" y="14" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#111">99.4%</text>
+    <text x="275" y="14" font-family="Times New Roman" font-size="7.2" text-anchor="middle" fill="#92400e">99.6%</text>
+
+    <text x="75" y="112" font-family="Times New Roman" font-size="7.5" text-anchor="middle" fill="#333">0.35</text>
+    <text x="125" y="112" font-family="Times New Roman" font-size="7.5" text-anchor="middle" fill="#333">0.40</text>
+    <text x="175" y="112" font-family="Times New Roman" font-size="7.5" font-weight="bold" text-anchor="middle" fill="#065f46">0.45</text>
+    <text x="225" y="112" font-family="Times New Roman" font-size="7.5" text-anchor="middle" fill="#333">0.50</text>
+    <text x="275" y="112" font-family="Times New Roman" font-size="7.5" text-anchor="middle" fill="#333">0.55</text>
+    <text x="175" y="125" font-family="Times New Roman" font-size="7.8" text-anchor="middle" fill="#111">Distance Threshold Cutoff</text>
+  </svg>
+  <div class="figure-caption">
+    <span class="figure-title">Figure 5.</span> Held-out Top-1 accuracy across distance thresholds from <code>evaluation_split.log</code>.
+  </div>
 </div>
-<table>
-  <tr>
-    <th>Distance Threshold (&tau;)</th>
-    <th>Top-1 Accuracy</th>
-    <th>False Rejection Rate</th>
-  </tr>
-  <tr>
-    <td>0.30</td>
-    <td>93.2%</td>
-    <td>6.8%</td>
-  </tr>
-  <tr>
-    <td>0.35</td>
-    <td>95.8%</td>
-    <td>4.2%</td>
-  </tr>
-  <tr>
-    <td>0.40</td>
-    <td>97.5%</td>
-    <td>2.5%</td>
-  </tr>
-  <tr>
-    <td><b>0.45 (Optimal Deployed)</b></td>
-    <td><b>98.3%</b></td>
-    <td><b>1.7%</b></td>
-  </tr>
-  <tr>
-    <td>0.50</td>
-    <td>97.9%</td>
-    <td>0.8%</td>
-  </tr>
-  <tr>
-    <td>0.55</td>
-    <td>97.0%</td>
-    <td>0.4%</td>
-  </tr>
-  <tr class="bottom-rule">
-    <td>0.60</td>
-    <td>96.1%</td>
-    <td>0.2%</td>
-  </tr>
-</table>
 
+<h2 class="sec-heading">7. Limitations and Future Improvements</h2>
 <p>
-As shown in Table 4, &tau; = 0.45 provides an optimal equilibrium between false rejections (enrolled faces incorrectly labeled as unknown) and false acceptances (inter-class intrusions). Below &tau; = 0.35, authentic intra-class variations in lighting cause premature rejection. Above &tau; = 0.50, out-of-distribution faces risk falling within the nearest enrolled class boundary.
+Although the system performs reliably on clear photos and live webcam captures, a few practical limitations remain:
 </p>
+<ul class="clean-list">
+  <li><b>Liveness Detection:</b> Like typical 2D camera recognition systems, the app cannot yet distinguish between a live student and a photo held up on a phone screen. Adding eye-blink or subtle head-motion verification would prevent photo spoofing.</li>
+  <li><b>Student Dashboard Login:</b> While student accounts and a low-attendance alert helper (<code>get_student_summary</code> at 75%) already exist in <code>app.py</code>, login is currently limited to admin and faculty roles. Enabling student login is an easy next addition.</li>
+  <li><b>Instant Enrollment:</b> Enrolling a new student currently requires adding their photo to <code>Dataset/</code> and re-running <code>train_model.py</code>. Supporting direct photo upload and incremental gallery updates from the admin page would save setup effort.</li>
+  <li><b>Image Format Support:</b> Three raw files in <code>Dataset/</code> (<code>.heif</code> and <code>.webp</code>) were skipped because <code>dataset_split.py</code> reads standard <code>.jpg</code>, <code>.jpeg</code>, and <code>.png</code> images.</li>
+</ul>
 
-<h3 class="subsec-heading">6.3. Latency and Hardware Profiling</h3>
+<h2 class="sec-heading">8. Conclusion</h2>
 <p>
-Latency benchmarks were captured on an Intel Core i7-11800H CPU @ 2.30 GHz (8 cores, 16 threads, no GPU execution).
-</p>
-
-<div class="table-caption">
-  <span class="figure-title">Table 5.</span> Computational latency breakdown per frame on commodity CPU.
-</div>
-<table>
-  <tr>
-    <th>Pipeline Processing Stage</th>
-    <th>Latency (ms)</th>
-    <th>Throughput</th>
-  </tr>
-  <tr>
-    <td>Frame Ingestion & Scaling (800px Lanczos)</td>
-    <td>14.2 ms</td>
-    <td>70.4 FPS</td>
-  </tr>
-  <tr>
-    <td>dlib HOG Face Localization (upsample=1)</td>
-    <td>38.6 ms</td>
-    <td>25.9 FPS</td>
-  </tr>
-  <tr>
-    <td>5-Point Landmark Alignment</td>
-    <td>4.1 ms</td>
-    <td>243.9 FPS</td>
-  </tr>
-  <tr>
-    <td>ResNet-34 128-d Metric Projection</td>
-    <td>62.4 ms</td>
-    <td>16.0 FPS</td>
-  </tr>
-  <tr>
-    <td>Dual-Stage Gate & RBF-SVM Classification</td>
-    <td>0.7 ms</td>
-    <td>1428.5 FPS</td>
-  </tr>
-  <tr>
-    <td>SQLite Logging & De-duplication Check</td>
-    <td>1.8 ms</td>
-    <td>555.5 FPS</td>
-  </tr>
-  <tr class="bottom-rule">
-    <td><b>Total End-to-End Frame Latency</b></td>
-    <td><b>121.8 ms</b></td>
-    <td><b>8.2 FPS</b></td>
-  </tr>
-</table>
-
-<p>
-The total latency of 121.8 ms enables a steady frame rate of over 8 frames per second on standard CPU cores, exceeding the refresh requirement for continuous video attendance marking.
-</p>
-
-<h2 class="sec-heading">7. Ethical Considerations and Robustness</h2>
-
-<h3 class="subsec-heading">7.1. Privacy and Biometric Protection</h3>
-<p>
-Biometric deployments in academic institutions necessitate stringent privacy controls. AFRAS mitigates data vulnerability through architectural design:
-</p>
-<p class="no-indent">
-&bull; <i>No Raw Biometric Storage:</i> Once <code>face_encodings.pkl</code> is generated, raw images can be archived offline or purged. Only 128-dimensional floating point vectors are retained.<br>
-&bull; <i>Non-Invertibility:</i> Mathematical inversion of 128-d deep ResNet descriptors back to high-resolution photographic faces is computationally intractable without generative priors, protecting student visual identity.<br>
-&bull; <i>Air-Gapped Operation:</i> The framework requires zero external cloud API connections, preventing third-party biometric exfiltration.
-</p>
-
-<h3 class="subsec-heading">7.2. Vulnerability to Presentation Attacks</h3>
-<p>
-While AFRAS demonstrates high recognition accuracy against authentic faces, 2D facial recognition systems remain vulnerable to presentation attacks (e.g., printed color photographs or high-definition tablet replays). Mitigation strategies planned for immediate release include passive blink detection using facial landmark eye aspect ratio (EAR) and frequency analysis of camera sensor moir&eacute; patterns.
-</p>
-
-<h2 class="sec-heading">8. Conclusion and Future Directions</h2>
-<p>
-This investigation developed and validated AFRAS, an automated facial recognition attendance management system tailored for institutional academic environments. By combining 128-dimensional deep metric embeddings with an RBF-SVM classifier and an empirical Euclidean rejection gate (&tau; = 0.45), AFRAS resolves the trade-off between open-set rejection and high-precision identity matching. Evaluated on 471 held-out test faces, the framework attains 98.3% Top-1 accuracy, 99.6% Top-3 SVM accuracy, and a 99.0% weighted F1-score while maintaining CPU inference latency below 125 ms.
-</p>
-<p>
-Future work will investigate temporal window voting across sequential frames to smooth single-frame anomalies, integrated anti-spoofing liveness verification, and quantization of the ResNet-34 backbone to 8-bit integer (INT8) ONNX models for sub-30ms execution on low-cost edge microcomputers (Raspberry Pi 5 and Google Coral Edge TPUs).
+We built an end-to-end Automated Face Recognition System tailored for classroom attendance. By combining pretrained 128-dimensional face embeddings with an RBF-SVM classifier and a 0.45 distance safety gate, the model reaches <b>98.3% Top-1 accuracy</b> and <b>99.6% Top-3 accuracy</b> across 471 held-out test photos, with zero false identity matches among all 463 accepted detections. Paired with a Flask and SQLite web portal supporting webcam capture, photo uploads, and video sampling, the system runs cleanly on standard laptops and is completely reproducible.
 </p>
 
 <h2 class="sec-heading">References</h2>
 <ol class="reference-list">
   <li>M. Turk and A. Pentland. Eigenfaces for recognition. <i>Journal of Cognitive Neuroscience</i>, 3(1):71&ndash;86, 1991.</li>
-  <li>P. N. Belhumeur, J. P. Hespanha, and D. J. Kriegman. Eigenfaces vs. Fisherfaces: Recognition using class specific linear projection. <i>IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)</i>, 19(7):711&ndash;720, 1997.</li>
-  <li>T. Ahonen, A. Hadid, and M. Pietik&auml;inen. Face description with local binary patterns: Application to face recognition. <i>IEEE TPAMI</i>, 28(12):2037&ndash;2041, 2006.</li>
-  <li>Y. Taigman, M. Yang, M. Ranzato, and L. Wolf. DeepFace: Closing the gap to human-level performance in face verification. In <i>IEEE Conference on Computer Vision and Pattern Recognition (CVPR)</i>, pages 1701&ndash;1708, 2014.</li>
+  <li>P. N. Belhumeur, J. P. Hespanha, and D. J. Kriegman. Eigenfaces vs. Fisherfaces: Recognition using class specific linear projection. <i>IEEE TPAMI</i>, 19(7):711&ndash;720, 1997.</li>
+  <li>T. Ahonen, A. Hadid, and M. Pietik&auml;inen. Face description with local binary patterns. <i>IEEE TPAMI</i>, 28(12):2037&ndash;2041, 2006.</li>
+  <li>Y. Taigman, M. Yang, M. Ranzato, and L. Wolf. DeepFace: Closing the gap to human-level performance in face verification. In <i>IEEE CVPR</i>, pages 1701&ndash;1708, 2014.</li>
   <li>F. Schroff, D. Kalenichenko, and J. Philbin. FaceNet: A unified embedding for face recognition and clustering. In <i>IEEE CVPR</i>, pages 815&ndash;823, 2015.</li>
-  <li>D. E. King. Dlib-ml: A machine learning toolkit. <i>Journal of Machine Learning Research (JMLR)</i>, 10:1755&ndash;1758, 2009.</li>
+  <li>D. E. King. Dlib-ml: A machine learning toolkit. <i>JMLR</i>, 10:1755&ndash;1758, 2009.</li>
   <li>D. E. King. High quality face recognition with deep metric learning. <i>dlib C++ Library Documentation</i>, 2017.</li>
-  <li>V. N. Vapnik. <i>The Nature of Statistical Learning Theory</i>. Springer-Verlag, New York, 1995.</li>
-  <li>J. Deng, J. Guo, N. Xue, and S. Zafeiriou. ArcFace: Additive angular margin loss for deep face recognition. In <i>IEEE CVPR</i>, pages 4690&ndash;4699, 2019.</li>
-  <li>H. Wang, Y. Wang, Z. Zhou, X. Ji, D. Gong, J. Zhou, Z. Li, and W. Liu. CosFace: Large margin cosine loss for deep face recognition. In <i>IEEE CVPR</i>, pages 5265&ndash;5274, 2018.</li>
+  <li>V. N. Vapnik. <i>The Nature of Statistical Learning Theory</i>. Springer-Verlag, 1995.</li>
+  <li>A. Geitgey. <i>face_recognition</i>: Facial recognition API for Python and the command line. GitHub Repository, 2017.</li>
   <li>A. Nguyen, T. Tran, and H. Pham. Real-time face recognition attendance system using deep learning. In <i>IEEE ICICT</i>, pages 1&ndash;6, 2021.</li>
-  <li>S. Ramakrishna, V. Kumar, and P. Reddy. Automated attendance systems using facial recognition and IoT. In <i>IJCAI Workshop on Computer Vision</i>, 2022.</li>
-  <li>G. B. Huang, M. Ramesh, T. Berg, and E. Learned-Miller. Labeled faces in the wild: A database for studying face recognition in unconstrained environments. <i>Technical Report 07-49, University of Massachusetts, Amherst</i>, 2007.</li>
+  <li>S. Ramakrishna, V. Kumar, and P. Reddy. Automated attendance systems using facial recognition and IoT. In <i>IJCAI Workshop</i>, 2022.</li>
+  <li>G. B. Huang, M. Ramesh, T. Berg, and E. Learned-Miller. Labeled faces in the wild: A database for studying face recognition in unconstrained environments. <i>UMass Tech Report 07-49</i>, 2007.</li>
   <li>C. Cortes and V. Vapnik. Support-vector networks. <i>Machine Learning</i>, 20(3):273&ndash;297, 1995.</li>
   <li>K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. In <i>IEEE CVPR</i>, pages 770&ndash;778, 2016.</li>
-  <li>P. Viola and M. Jones. Rapid object detection using a boosted cascade of simple features. In <i>IEEE CVPR</i>, pages 511&ndash;518, 2001.</li>
 </ol>
 
-<h2 class="sec-heading">Appendix A: Version Control & Commit Audit</h2>
+<h2 class="sec-heading">Appendix A: Repository Commits &amp; Timestamps</h2>
 <p class="no-indent">
-The implementation and validation of AFRAS were recorded across 9 structured commits in the official repository. All commit hashes, UTC/IST timestamps, and messages are enumerated in Table 6.
+All source code is hosted at <code>https://github.com/teerth-iitj/Automated_Facial_Recognition_System</code>. Table 6 lists the verified git commits and timestamps on the <code>main</code> branch.
 </p>
 
 <div class="table-caption">
-  <span class="figure-title">Table 6.</span> Complete chronological version control audit trail for AFRAS.
+  <span class="figure-title">Table 6.</span> Git commit hashes, timestamps (IST, UTC+05:30), and descriptions.
 </div>
 <table>
   <tr>
-    <th>Commit Hash</th>
+    <th>Hash</th>
     <th>Timestamp</th>
-    <th>Audit Log Message</th>
+    <th>Commit Message</th>
   </tr>
   <tr>
     <td><code>33e6fb4a</code></td>
@@ -940,101 +891,82 @@ The implementation and validation of AFRAS were recorded across 9 structured com
   <tr>
     <td><code>0ddd2073</code></td>
     <td>2026-11-27 04:00</td>
-    <td>Add pre-built face gallery checkpoint (face_encodings.pkl, ~5.8 MB, 98 identities)</td>
+    <td>Add pre-built face gallery checkpoint (face_encodings.pkl, ~5.8 MB)</td>
   </tr>
-  <tr>
+  <tr class="bottom-rule">
     <td><code>033a61bd</code></td>
     <td>2026-11-27 04:26</td>
     <td>Repo cleanup: add .gitignore, README, REPRODUCIBILITY, LICENSE, environment.yml</td>
   </tr>
-  <tr class="bottom-rule">
-    <td><code>b880f55f</code></td>
-    <td>2026-11-27 04:49</td>
-    <td>Add CVPR 2026 7-page technical report (CVPR_Report.md)</td>
-  </tr>
 </table>
 
-<h2 class="sec-heading">Appendix B: Reproducibility Declaration & Checklist</h2>
+<h2 class="sec-heading">Appendix B: Reproducibility Statement &amp; Files</h2>
 <p class="no-indent">
-<b>Formal Declaration Statement:</b> The authors certify that all algorithmic procedures, experimental partitions, parameterizations, and performance metrics presented in this technical report are completely reproducible. All software code, deterministic data splitting utilities (<code>dataset_split.py</code>, <code>seed = 42</code>), evaluation harnesses, dependency specifications, and pre-compiled model gallery checkpoints (<code>face_encodings.pkl</code>) are archived under open-source MIT licensing.
+<b>Declaration Statement of Reproducibility:</b> We declare that the evaluation numbers and application behavior described in this report are reproducible using the repository source code, pinned dependency specs (<code>requirements.txt</code>, <code>environment.yml</code>), deterministic dataset splitter (<code>dataset_split.py</code>, <code>seed=42</code>), evaluation script (<code>evaluate_model.py</code>), and committed gallery checkpoint (<code>face_encodings.pkl</code>, ~5.8 MB). Raw dataset photos (~1.05 GB across 2,463 files) are excluded via <code>.gitignore</code> due to size and student privacy; folder naming rules are documented in <code>README.md</code> and <code>REPRODUCIBILITY.md</code>. Underlying pretrained ResNet face weights come from <code>face_recognition_models</code> (<code>https://github.com/ageitgey/face_recognition_models</code>).
 </p>
 
 <div class="table-caption">
-  <span class="figure-title">Table 7.</span> Machine learning reproducibility verification checklist.
+  <span class="figure-title">Table 7.</span> Organized repository files and reproducibility artifacts.
 </div>
 <table>
   <tr>
-    <th>Reproducibility Criterion</th>
-    <th>Status & Artifact Location</th>
+    <th>File / Folder</th>
+    <th>Purpose</th>
   </tr>
   <tr>
-    <td>Complete Source Code Repository</td>
-    <td>Publicly accessible at GitHub repository root</td>
+    <td><code>app.py</code> &amp; <code>templates/</code></td>
+    <td>Flask web server, SQLite database setup, and HTML dashboards</td>
   </tr>
   <tr>
-    <td>Deterministic Train/Test Split</td>
-    <td><code>dataset_split.py</code> (seed = 42, test_fraction = 0.20)</td>
+    <td><code>train_model.py</code></td>
+    <td>Parallel face encoding builder and RBF-SVM classifier trainer</td>
   </tr>
   <tr>
-    <td>Deterministic Evaluation Harness</td>
-    <td><code>evaluate_model.py</code> with threshold sweep</td>
+    <td><code>evaluate_model.py</code></td>
+    <td>Held-out evaluation script with overlap guard and threshold sweep</td>
   </tr>
   <tr>
-    <td>Pre-built Gallery Checkpoint</td>
-    <td><code>face_encodings.pkl</code> (~5.8 MB, 98 identities)</td>
+    <td><code>dataset_split.py</code></td>
+    <td>Deterministic 80/20 split utility (<code>seed=42</code>)</td>
   </tr>
   <tr>
-    <td>Automated Dependency Audit</td>
-    <td><code>req.py</code> with programmatic self-test</td>
+    <td><code>run_all.py</code> &amp; <code>req.py</code></td>
+    <td>CLI pipeline runner and automated dependency checker</td>
   </tr>
   <tr>
-    <td>Package Version Pinning</td>
-    <td><code>requirements.txt</code> and <code>environment.yml</code></td>
+    <td><code>face_encodings.pkl</code></td>
+    <td>Committed model checkpoint (~5.8 MB; 1,964 encodings + RBF-SVM)</td>
   </tr>
   <tr>
-    <td>Interactive Web Controller</td>
-    <td><code>app.py</code> with SQLite database auto-migration</td>
+    <td><code>requirements.txt</code> / <code>environment.yml</code></td>
+    <td>pip and Conda environment dependency files</td>
   </tr>
   <tr class="bottom-rule">
-    <td>One-Click Verification Script</td>
-    <td><code>start.bat</code> and <code>start.ps1 --Evaluate</code></td>
+    <td><code>REPRODUCIBILITY.md</code> / <code>start.bat</code></td>
+    <td>Step-by-step reproduction guide and Windows one-click launcher</td>
   </tr>
 </table>
 
-<h2 class="sec-heading">Appendix C: Codebase Execution Guide</h2>
-<p class="no-indent">
-To reproduce the experimental pipeline and verify metrics:
-</p>
+<h2 class="sec-heading">Appendix C: Instructions to Reproduce</h2>
 <pre class="code-box">
-# 1. Clone repository
+# 1. Clone the repository
 git clone https://github.com/teerth-iitj/Automated_Facial_Recognition_System.git
 cd Automated_Facial_Recognition_System
 
-# 2. Configure environment
+# 2. Create environment &amp; check packages
 conda env create -f environment.yml
 conda activate facial_recognition
-
-# 3. Verify dependencies
 python req.py --check
 
-# 4. Reproduce held-out evaluation metrics
-python evaluate_model.py --dataset Dataset --encodings face_encodings.pkl \\
-    --threshold 0.45 --seed 42 --test_fraction 0.20
+# 3. Reproduce held-out evaluation (with Dataset/ present)
+python evaluate_model.py --dataset Dataset --encodings face_encodings.pkl --threshold 0.45 --seed 42
 
-# 5. Launch interactive web dashboard
+# 4. Or retrain checkpoint from scratch
+python train_model.py --dataset Dataset --output face_encodings.pkl --workers 4 --jitters 1
+
+# 5. Launch the web application (or run start.bat on Windows)
 python run_all.py --run --port 5000
 </pre>
-
-<h2 class="sec-heading">Appendix D: Deployment Specifications</h2>
-<p class="no-indent">
-System operational benchmarks recommend the following minimum hardware configuration for standard institutional lecture theaters:
-</p>
-<p class="no-indent">
-&bull; <i>CPU Architecture:</i> Quad-core Intel Core i5 / AMD Ryzen 5 or higher with AVX2 instruction set support.<br>
-&bull; <i>Memory:</i> 8 GB DDR4 RAM (approximately 650 MB resident set memory usage during live inference).<br>
-&bull; <i>Optical Sensor:</i> Standard 1080p USB webcam equipped with autofocus and auto-exposure compensation.<br>
-&bull; <i>Operating System:</i> Windows 10/11 x64, Ubuntu LTS 20.04+, or macOS Ventura+.
-</p>
 
 </div>
 
@@ -1071,6 +1003,8 @@ def generate_pdf():
         page_count = len(reader.pages)
         print(f"Generated PDF successfully: {pdf_path}")
         print(f"Total Pages: {page_count}")
+        for idx, page in enumerate(reader.pages, start=1):
+            print(f"  Page {idx}: {len(page.extract_text())} chars")
         return page_count
     else:
         print("Failed to generate PDF.")
