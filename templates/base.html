@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Face Attendance{% endblock %}</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, Segoe UI, sans-serif; color: #172033; background: #f3f6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem max(1rem, calc((100% - 1050px) / 2)); background: #14213d; color: white; }
+    header a { color: white; text-decoration: none; font-weight: 700; }
+    main { width: min(1050px, calc(100% - 2rem)); margin: 2rem auto; }
+    h1 { margin-top: 0; font-size: 1.7rem; }
+    h2 { font-size: 1.1rem; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .card { background: white; border: 1px solid #e1e7f0; border-radius: 12px; padding: 1.2rem; box-shadow: 0 4px 16px #14213d0a; }
+    label { display: block; margin: .7rem 0 .3rem; font-weight: 600; }
+    input, select, button { font: inherit; }
+    input:not([type=file]), select { width: 100%; padding: .65rem; border: 1px solid #cbd4e1; border-radius: 7px; background: white; }
+    input[type=file] { display: block; max-width: 100%; margin: .7rem 0; }
+    button, .button { display: inline-block; border: 0; border-radius: 7px; padding: .65rem .9rem; margin-top: .8rem; background: #2457c5; color: white; cursor: pointer; text-decoration: none; }
+    button.secondary { background: #53627a; }
+    button.danger { background: #b42318; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .muted { color: #637086; }
+    .notice { min-height: 1.5rem; margin: .6rem 0; color: #2457c5; }
+    .notice.error { color: #b42318; }
+    .row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+    .row > * { flex: 1; }
+    table { width: 100%; border-collapse: collapse; margin-top: .8rem; }
+    th, td { text-align: left; padding: .55rem; border-bottom: 1px solid #e1e7f0; }
+    .stats { display: flex; flex-wrap: wrap; gap: .7rem; }
+    .stat { flex: 1; min-width: 110px; background: #eef3fc; border-radius: 8px; padding: .8rem; }
+    .stat strong { display: block; font-size: 1.25rem; }
+    @media (max-width: 550px) { main { margin: 1rem auto; } header { padding: .8rem 1rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">Face Attendance</a>
+    {% if user %}
+      <div class="row" style="flex: initial">
+        <span>{{ user }}</span>
+        <button class="secondary" type="button" onclick="logout()">Sign out</button>
+      </div>
+    {% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <script>
+    async function api(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+      return data;
+    }
+    function showMessage(element, message, isError = false) {
+      element.textContent = message;
+      element.classList.toggle("error", isError);
+    }
+    async function logout() {
+      try {
+        await api("/logout", { method: "POST" });
+        window.location.assign("/login");
+      } catch (error) {
+        window.alert(error.message);
+      }
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

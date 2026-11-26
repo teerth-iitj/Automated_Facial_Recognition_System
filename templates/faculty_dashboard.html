@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block title %}Faculty - Face Attendance{% endblock %}
+{% block content %}
+<h1>Faculty dashboard</h1>
+<p class="muted">Choose an assigned class, then upload or capture a photo to mark attendance.</p>
+<p id="message" class="notice" role="status"></p>
+<div class="grid">
+  <section class="card">
+    <h2>Class</h2>
+    <label for="semester">Semester</label>
+    <select id="semester"></select>
+    <label for="subject">Subject</label>
+    <select id="subject"></select>
+    <button id="select-class" type="button">Use this class</button>
+    <p id="context" class="muted">Select an assigned semester and subject.</p>
+  </section>
+  <section class="card">
+    <h2>Live camera</h2>
+    <p class="muted">Open this page in Chrome on the laptop. Select a class and start the camera; if the wrong camera opens, choose the laptop webcam below. A page opened on a phone can only use the phone camera.</p>
+    <video id="camera-preview" autoplay playsinline muted
+      style="display:block;width:100%;max-height:320px;min-height:180px;object-fit:cover;background:#111;border-radius:8px"></video>
+    <label for="camera-device">Camera device</label>
+    <select id="camera-device" disabled>
+      <option value="">Start the camera to list available devices</option>
+    </select>
+    <div class="row">
+      <button id="start-camera" type="button" disabled>Start camera</button>
+      <button id="stop-camera" class="secondary" type="button" disabled>Stop camera</button>
+    </div>
+    <button id="capture-camera" type="button" disabled>Capture and mark attendance</button>
+    <p id="camera-status" class="notice" role="status">Select a class first.</p>
+  </section>
+  <section class="card">
+    <h2>Recognize from photo</h2>
+    <form id="image-form">
+      <label for="image">Upload a photo or use a supported device camera</label>
+      <input id="image" type="file" accept="image/*" capture="user" required>
+      <button type="submit">Recognize and mark attendance</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Recognize from video</h2>
+    <form id="video-form">
+      <label for="video">Video file</label>
+      <input id="video" type="file" accept="video/*" required>
+      <button type="submit">Process video</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Attendance summary</h2>
+    <div id="summary" class="stats muted">Choose a class to load its summary.</div>
+    <a id="download" class="button" href="#" hidden>Download CSV</a>
+  </section>
+</div>
+<section class="card" style="margin-top: 1rem">
+  <div class="row">
+    <h2 style="margin: 0">Recent attendance</h2>
+    <button id="clear-attendance" type="button" class="danger" disabled>Clear class attendance</button>
+  </div>
+  <div style="overflow-x: auto">
+    <table>
+      <thead><tr><th>Name</th><th>Subject</th><th>Time</th><th>Source</th><th>Action</th></tr></thead>
+      <tbody id="records"><tr><td colspan="5" class="muted">No class selected.</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="card" style="margin-top: 1rem">
+  <h2>Recognition result</h2>
+  <pre id="result" class="muted">No image or video processed yet.</pre>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const message = document.getElementById("message");
+  const semester = document.getElementById("semester");
+  const subject = document.getElementById("subject");
+  const result = document.getElementById("result");
+  const cameraVideo = document.getElementById("camera-preview");
+  const cameraStatus = document.getElementById("camera-status");
+  const cameraDevice = document.getElementById("camera-device");
+  const startCameraButton = document.getElementById("start-camera");
+  const stopCameraButton = document.getElementById("stop-camera");
+  const captureCameraButton = document.getElementById("capture-camera");
+  const clearAttendanceButton = document.getElementById("clear-attendance");
+  let activeClass = null;
+  let cameraStream = null;
+
+  function fillSelect(select, items, label) {
+    select.replaceChildren();
+    for (const item of items) {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = label(item);
+      select.append(option);
+    }
+  }
+  async function loadSubjects() {
+    const { subjects } = await api(`/api/subjects?semester_id=${encodeURIComponent(semester.value)}`);
+    fillSelect(subject, subjects, (item) => item.name);
+  }
+  async function chooseClass() {
+    const semesterId = Number(semester.value);
+    const subjectId = Number(subject.value);
+    if (!semesterId || !subjectId) throw new Error("No assigned class is available.");
+    const { context } = await api("/api/faculty/context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ semester_id: semesterId, subject_id: subjectId })
+    });
+    activeClass = { semester_id: semesterId, subject_id: subjectId };
+    startCameraButton.disabled = false;
+    clearAttendanceButton.disabled = false;
+    cameraStatus.textContent = "Class selected. Start the camera when ready.";
+    document.getElementById("context").textContent = `${context.semester_name} — ${context.subject_name}`;
+    showMessage(message, "Class selected.");
+    await refreshAttendance();
+  }
+  async function startCamera() {
+    if (!activeClass) throw new Error("Select a class first.");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("Camera access requires Chrome on localhost or HTTPS.");
+    }
+
+    const video = cameraDevice.value
+      ? { deviceId: { exact: cameraDevice.value } }
+      : true;
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video,
+      audio: false
+    });
+    cameraVideo.srcObject = cameraStream;
+    try {
+      await cameraVideo.play();
+    } catch (error) {
+      stopCamera();
+      throw error;
+    }
+    startCameraButton.disabled = true;
+    stopCameraButton.disabled = false;
+    captureCameraButton.disabled = false;
+    try {
+      await loadCameraDevices(getCameraDeviceId(cameraStream));
+      cameraStatus.textContent = `Camera is live: ${cameraDevice.selectedOptions[0].textContent}. Choose the laptop webcam if this is the wrong camera.`;
+    } catch (error) {
+      showMessage(cameraStatus, `Preview is live, but camera devices could not be listed: ${cameraErrorMessage(error)}`, true);
+    }
+  }
+  function getCameraDeviceId(stream) {
+    const track = stream && stream.getVideoTracks()[0];
+    return track ? track.getSettings().deviceId : "";
+  }
+  async function loadCameraDevices(selectedDeviceId) {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter((device) => device.kind === "videoinput");
+    cameraDevice.replaceChildren();
+    if (!cameras.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No cameras found";
+      cameraDevice.append(option);
+      cameraDevice.disabled = true;
+      return;
+    }
+
+    cameras.forEach((device, index) => {
+      const option = document.createElement("option");
+      option.value = device.deviceId;
+      option.textContent = device.label || `Camera ${index + 1}`;
+      cameraDevice.append(option);
+    });
+    if (cameras.some((device) => device.deviceId === selectedDeviceId)) {
+      cameraDevice.value = selectedDeviceId;
+    }
+    cameraDevice.disabled = cameras.length < 2;
+  }
+  function cameraErrorMessage(error) {
+    if (error && ["NotAllowedError", "PermissionDeniedError"].includes(error.name)) {
+      return "Camera access was blocked. Allow camera access for this site in Chrome and Windows privacy settings.";
+    }
+    if (error && ["NotFoundError", "DevicesNotFoundError"].includes(error.name)) {
+      return "No camera was found. Check that the laptop webcam is connected and enabled.";
+    }
+    if (error && ["NotReadableError", "TrackStartError"].includes(error.name)) {
+      return "The camera is busy in another app. Close apps such as Teams, Zoom, or Camera and try again.";
+    }
+    if (error && error.name === "OverconstrainedError") {
+      return "That camera is unavailable. Select another camera device and try again.";
+    }
+    return error && error.message ? error.message : "Could not open the camera.";
+  }
+  async function switchCamera() {
+    if (!cameraStream || !cameraDevice.value) return;
+
+    const previousStream = cameraStream;
+    const previousDeviceId = getCameraDeviceId(previousStream);
+    let nextStream = null;
+    cameraDevice.disabled = true;
+    captureCameraButton.disabled = true;
+    try {
+      nextStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: cameraDevice.value } },
+        audio: false
+      });
+      cameraVideo.srcObject = nextStream;
+      await cameraVideo.play();
+      cameraStream = nextStream;
+      previousStream.getTracks().forEach((track) => track.stop());
+      cameraStatus.textContent = `Camera is live: ${cameraDevice.selectedOptions[0].textContent}.`;
+    } catch (error) {
+      if (nextStream) nextStream.getTracks().forEach((track) => track.stop());
+      cameraVideo.srcObject = previousStream;
+      cameraStream = previousStream;
+      cameraDevice.value = previousDeviceId;
+      showMessage(cameraStatus, cameraErrorMessage(error), true);
+    } finally {
+      cameraDevice.disabled = cameraDevice.options.length < 2;
+      captureCameraButton.disabled = !cameraStream;
+    }
+  }
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStream = null;
+    }
+    cameraVideo.srcObject = null;
+    startCameraButton.disabled = !activeClass;
+    stopCameraButton.disabled = true;
+    captureCameraButton.disabled = true;
+    cameraDevice.disabled = cameraDevice.options.length < 2;
+    cameraStatus.textContent = activeClass ? "Camera stopped." : "Select a class first.";
+  }
+  async function captureCameraFrame() {
+    if (!cameraStream || !activeClass) {
+      showMessage(cameraStatus, "Start the camera and select a class first.", true);
+      return;
+    }
+
+    captureCameraButton.disabled = true;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      if (!canvas.width || !canvas.height) {
+        throw new Error("Camera frame is not ready yet. Try again in a moment.");
+      }
+
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Could not capture a camera frame.");
+      context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+      const image = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+      if (!image) throw new Error("Could not encode the camera frame.");
+
+      const data = new FormData();
+      data.append("image", image, "camera.jpg");
+      data.append("source", "camera");
+      const response = await api("/recognize", { method: "POST", body: data });
+      result.textContent = JSON.stringify(response, null, 2);
+      const recognized = response.recognized || [];
+      const marked = response.marked_now || [];
+      if (marked.length) {
+        showMessage(cameraStatus, `Attendance marked: ${marked.join(", ")}`);
+      } else if (recognized.length) {
+        showMessage(cameraStatus, `Recognized ${recognized.join(", ")}, but attendance is already recorded today for this class.`);
+      } else if (response.face_count > 0) {
+        showMessage(cameraStatus, "Face detected, but it did not match the trained identities. Check that the person is in the training dataset.");
+      } else {
+        showMessage(cameraStatus, "No face detected. Check the camera framing and lighting.");
+      }
+      await refreshAttendance();
+    } catch (error) {
+      showMessage(cameraStatus, error.message, true);
+    } finally {
+      captureCameraButton.disabled = !cameraStream;
+    }
+  }
+  async function refreshAttendance() {
+    if (!activeClass) return;
+    const query = new URLSearchParams(activeClass);
+    const [summary, records] = await Promise.all([
+      api(`/attendance/summary?${query}`),
+      api(`/attendance?${query}`)
+    ]);
+    const summaryNode = document.getElementById("summary");
+    summaryNode.replaceChildren();
+    for (const [label, value] of [
+      ["Today", summary.today_records],
+      ["Total", summary.total_records],
+      ["Students", summary.unique_students]
+    ]) {
+      const stat = document.createElement("div");
+      stat.className = "stat";
+      stat.innerHTML = `<span class="muted">${label}</span><strong>${value}</strong>`;
+      summaryNode.append(stat);
+    }
+    const body = document.getElementById("records");
+    body.replaceChildren();
+    if (!records.records.length) {
+      body.innerHTML = '<tr><td colspan="5" class="muted">No attendance records yet.</td></tr>';
+    } else {
+      for (const row of records.records) {
+        const tr = document.createElement("tr");
+        for (const value of [row.name, row.subject_name || "-", row.timestamp, row.source]) {
+          const td = document.createElement("td");
+          td.textContent = value;
+          tr.append(td);
+        }
+        const action = document.createElement("td");
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "danger";
+        removeButton.textContent = "Remove";
+        removeButton.dataset.attendanceId = row.id;
+        removeButton.dataset.name = row.name;
+        action.append(removeButton);
+        tr.append(action);
+        body.append(tr);
+      }
+    }
+    const download = document.getElementById("download");
+    download.href = `/attendance/download?${query}`;
+    download.hidden = false;
+  }
+  async function removeAttendanceRecord(attendanceId, name) {
+    if (!window.confirm(`Remove ${name}'s attendance record? Their face enrollment will remain unchanged.`)) return;
+
+    try {
+      const response = await api(`/attendance/${encodeURIComponent(attendanceId)}`, { method: "DELETE" });
+      showMessage(message, `Removed ${response.deleted_records} attendance record(s) for ${name}.`);
+      await refreshAttendance();
+    } catch (error) {
+      showMessage(message, error.message, true);
+    }
+  }
+  async function clearCurrentAttendance() {
+    if (!activeClass) {
+      showMessage(message, "Select a class first.", true);
+      return;
+    }
+    if (!window.confirm("Permanently clear attendance records for the selected class?")) return;
+
+    clearAttendanceButton.disabled = true;
+    try {
+      const response = await api("/attendance/clear-current", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(activeClass)
+      });
+      showMessage(message, `Cleared ${response.deleted_records} attendance record(s) for this class.`);
+      await refreshAttendance();
+    } catch (error) {
+      showMessage(message, error.message, true);
+    } finally {
+      clearAttendanceButton.disabled = !activeClass;
+    }
+  }
+  async function submitMedia(form, fieldName, endpoint) {
+    if (!activeClass) {
+      showMessage(message, "Select a class first.", true);
+      return;
+    }
+    const file = form.querySelector('input[type="file"]').files[0];
+    if (!file) return;
+    const button = form.querySelector("button");
+    button.disabled = true;
+    const data = new FormData();
+    data.append(fieldName, file);
+    try {
+      const response = await api(endpoint, { method: "POST", body: data });
+      result.textContent = JSON.stringify(response, null, 2);
+      showMessage(message, "Processing complete.");
+      await refreshAttendance();
+    } catch (error) {
+      showMessage(message, error.message, true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+  document.getElementById("select-class").addEventListener("click", () => {
+    chooseClass().catch((error) => showMessage(message, error.message, true));
+  });
+  startCameraButton.addEventListener("click", () => {
+    startCamera().catch((error) => showMessage(cameraStatus, cameraErrorMessage(error), true));
+  });
+  cameraDevice.addEventListener("change", switchCamera);
+  stopCameraButton.addEventListener("click", stopCamera);
+  captureCameraButton.addEventListener("click", captureCameraFrame);
+  window.addEventListener("pagehide", stopCamera);
+  document.getElementById("image-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitMedia(event.currentTarget, "image", "/recognize");
+  });
+  document.getElementById("video-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitMedia(event.currentTarget, "video", "/recognize-video");
+  });
+  document.getElementById("records").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-attendance-id]");
+    if (!button) return;
+    removeAttendanceRecord(button.dataset.attendanceId, button.dataset.name)
+      .catch((error) => showMessage(message, error.message, true));
+  });
+  clearAttendanceButton.addEventListener("click", clearCurrentAttendance);
+  semester.addEventListener("change", () => {
+    loadSubjects().catch((error) => showMessage(message, error.message, true));
+  });
+  api("/api/semesters").then(({ semesters }) => {
+    fillSelect(semester, semesters, (item) => item.name);
+    return loadSubjects();
+  }).catch((error) => showMessage(message, error.message, true));
+</script>
+{% endblock %}
