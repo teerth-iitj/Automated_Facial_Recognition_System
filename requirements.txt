@@ -1,0 +1,11 @@
+face_recognition
+flask
+flask-cors
+werkzeug
+opencv-python
+numpy
+Pillow
+joblib
+scipy
+scikit-learn
+setuptools<81
