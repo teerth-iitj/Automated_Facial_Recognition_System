@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Dataset (too large - 1 GB+; see README for download instructions)
+Dataset/
+
+# Large binary artifacts (checkpoint ~5.8 MB - included in repo)
+# face_encodings.pkl is kept (< 6 MB threshold)
+
+# Runtime files
+attendance.db
+*.log
+*.csv
+
+# Test / temp images
+1.jpg
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
